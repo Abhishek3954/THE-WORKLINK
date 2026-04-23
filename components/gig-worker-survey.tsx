@@ -261,19 +261,31 @@ export function GigWorkerSurvey() {
         gigProfile: profile as GigWorkerProfile,
         workerType: 'gig'
       })
-      await fetch('/api/saveGigData', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: workerData.name,
-          phone: workerData.phone,
-          password: workerData.password,
-          city: workerData.city,
-          ...profile,
+      try {
+        const response = await fetch('/api/saveGigData', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: workerData.name,
+            phone: workerData.phone,
+            password: workerData.password,
+            city: workerData.city,
+            ...profile,
+          })
         })
-      })
 
-      setCurrentStep('gig-profile-complete')
+        const result = await response.json();
+
+        if (!response.ok) {
+          alert(`Error: ${result.error || 'Failed to save data'}`);
+          return;
+        }
+
+        setCurrentStep('gig-profile-complete')
+      } catch (err) {
+        console.error('Submission Error:', err);
+        alert('Failed to connect to the server. Please check your internet and MongoDB connection.');
+      }
     }
   }
 
