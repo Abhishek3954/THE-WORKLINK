@@ -148,6 +148,54 @@ export async function PUT(req: Request) {
       }
     }
 
+    // Award rank points on collaborative work completion
+    if (status === 'completed' && currentOrder.status !== 'completed' && 
+        currentOrder.mentorPhone && currentOrder.rookiePhone) {
+      
+      const POINTS_PER_COLLAB = 20;
+      const MAX_RANK = 4;
+      const POINTS_TO_RANK_UP = 100;
+
+      const awardPoints = async (phone: string) => {
+        if (!phone) return;
+        const worker = await workerCollection.findOne({ phone });
+        if (!worker) return;
+
+        const currentPoints = (worker.rankPoints || 0) + POINTS_PER_COLLAB;
+        const currentRank = worker.rank || 1;
+
+        if (currentPoints >= POINTS_TO_RANK_UP && currentRank < MAX_RANK) {
+          // Rank up! Reset points and increment rank
+          await workerCollection.updateOne(
+            { phone },
+            { 
+              $set: { 
+                rankPoints: currentPoints - POINTS_TO_RANK_UP,
+                rank: currentRank + 1,
+                rankUpgraded: true, // Flag for frontend animation
+                lastRankUpDate: new Date(),
+                updatedAt: new Date()
+              }
+            }
+          );
+        } else {
+          // Just add points
+          await workerCollection.updateOne(
+            { phone },
+            { 
+              $set: { 
+                rankPoints: Math.min(currentPoints, POINTS_TO_RANK_UP),
+                updatedAt: new Date()
+              }
+            }
+          );
+        }
+      };
+
+      await awardPoints(currentOrder.mentorPhone);
+      await awardPoints(currentOrder.rookiePhone);
+    }
+
     const result = await orderCollection.findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $set: updateData },

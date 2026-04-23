@@ -1,9 +1,9 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useRef, useState, useEffect } from 'react'
 import { ProgressBar } from './progress-bar'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Play } from 'lucide-react'
 
 interface SurveyLayoutProps {
   children: ReactNode
@@ -32,6 +32,25 @@ export function SurveyLayout({
   canProceed = true,
   showBack = true,
 }: SurveyLayoutProps) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  // Autoplay handler
+  useEffect(() => {
+    // Only attempt autoplay once when component mounts
+    if (videoRef.current) {
+      videoRef.current.play().catch(e => {
+        console.log("Autoplay prevented by browser:", e)
+      })
+    }
+  }, [])
+
+  const handleVideoClick = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play();
+    }
+  }
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -89,6 +108,30 @@ export function SurveyLayout({
           )}
         </div>
       </footer>
+
+      {/* Floating Video Overlay */}
+      <div 
+        onClick={handleVideoClick}
+        className="fixed bottom-24 right-4 w-32 md:w-48 aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl z-50 cursor-pointer border-[3px] border-primary hover:scale-105 transition-transform bg-black group"
+      >
+        <video 
+          ref={videoRef}
+          src="/survey-intro.mp4" 
+          autoPlay
+          playsInline
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
+          onEnded={() => setIsPlaying(false)}
+          className="w-full h-full object-cover"
+        />
+        {!isPlaying && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity">
+            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground shadow-lg">
+              <Play className="w-5 h-5 ml-1" />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

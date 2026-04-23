@@ -36,19 +36,50 @@ export async function POST(req: Request) {
   }
 }
 
-// GET: Fetch requests for a worker
+// GET: Fetch requests for a worker (incoming requests OR declined requests for recruiter)
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const phone = searchParams.get('phone');
+    const type = searchParams.get('type'); // 'incoming' (default) or 'declined'
 
     if (!phone) {
       return NextResponse.json({ success: false, error: 'Phone required' }, { status: 400 });
     }
 
     const db = await getDb();
+
+    if (type === 'declined') {
+      // Fetch orders where this worker is the recruiter and recruitment was declined
+      const declinedOrders = await db.collection('orders').find({
+        recruiterPhone: phone,
+        recruitmentStatus: 'declined',
+        status: 'recruitment_pending'
+      }).toArray();
+
+      const result = declinedOrders.map(order => {
+        let imageData = null;
+        if (order.image && order.image.data) {
+          const buffer = order.image.data.buffer || order.image.data;
+          const b64 = Buffer.from(buffer).toString('base64');
+          imageData = `data:${order.image.contentType};base64,${b64}`;
+        }
+        return {
+          orderId: order._id,
+          mainSkill: order.mainSkill,
+          budget: order.budget,
+          description: order.description,
+          recruitmentType: order.recruitmentType,
+          recruitedWorkerPhone: order.recruitedWorkerPhone,
+          image: imageData,
+          date: order.createdAt
+        };
+      });
+
+      return NextResponse.json({ success: true, data: result });
+    }
     
-    // Find orders where this worker is being recruited and status is pending
+    // Default: Find orders where this worker is being recruited and status is pending
     const requests = await db.collection('orders').aggregate([
       { 
         $match: { 
@@ -114,12 +145,13 @@ export async function PATCH(req: Request) {
     }
 
     if (status === 'declined') {
+      // Mark recruitment as declined but keep order in recruitment_pending state.
+      // The original worker will be notified and can choose to work alone or re-request.
       await db.collection('orders').updateOne(
         { _id: new ObjectId(orderId) },
         { 
           $set: { 
             recruitmentStatus: 'declined',
-            recruitedWorkerPhone: null,
             updatedAt: new Date()
           } 
         }
@@ -144,7 +176,7 @@ export async function PATCH(req: Request) {
       rookiePhone = recruiterPhone;
     }
 
-    // Update order status to ongoing/accepted and link both workers
+    // Update order status to accepted and link both workers
     // Payments will happen in api/consumer/order PUT based on progress (arrived/completed)
     await db.collection('orders').updateOne(
       { _id: new ObjectId(orderId) },
@@ -163,6 +195,68 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ success: true, message: 'Request accepted' });
   } catch (error: any) {
     console.error('Handle Workforce Request Error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  }
+}
+
+// PUT: Handle decline response - Work Alone or Re-Request recruitment
+export async function PUT(req: Request) {
+  try {
+    const db = await getDb();
+    const { orderId, action, recruitedPhone, recruitmentType } = await req.json();
+
+    if (!orderId || !action) {
+      return NextResponse.json({ success: false, error: 'Order ID and action required' }, { status: 400 });
+    }
+
+    const order = await db.collection('orders').findOne({ _id: new ObjectId(orderId) });
+    if (!order) {
+      return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
+    }
+
+    if (action === 'work_alone') {
+      // Move order to accepted status and clear recruitment fields
+      await db.collection('orders').updateOne(
+        { _id: new ObjectId(orderId) },
+        { 
+          $set: { 
+            status: 'accepted',
+            recruitmentStatus: null,
+            recruitmentType: null,
+            recruitedWorkerPhone: null,
+            recruiterPhone: null,
+            mentorPhone: null,
+            rookiePhone: null,
+            updatedAt: new Date()
+          } 
+        }
+      );
+      return NextResponse.json({ success: true, message: 'Now working alone. Order is active.' });
+    }
+
+    if (action === 're_request') {
+      if (!recruitedPhone || !recruitmentType) {
+        return NextResponse.json({ success: false, error: 'Recruited phone and type required for re-request' }, { status: 400 });
+      }
+
+      // Send a new recruitment request to the selected worker
+      await db.collection('orders').updateOne(
+        { _id: new ObjectId(orderId) },
+        { 
+          $set: { 
+            recruitedWorkerPhone: recruitedPhone,
+            recruitmentType: recruitmentType,
+            recruitmentStatus: 'pending',
+            updatedAt: new Date()
+          } 
+        }
+      );
+      return NextResponse.json({ success: true, message: 'New recruitment request sent' });
+    }
+
+    return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
+  } catch (error: any) {
+    console.error('Workforce Decline Response Error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 
 export async function POST(req: Request) {
   try {
-    const { orderId, workerPhone, scheduledTime } = await req.json();
+    const { orderId, workerPhone, scheduledTime, hasRecruitment } = await req.json();
 
     if (!orderId || !workerPhone || !scheduledTime) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
@@ -36,12 +36,16 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
+    // If worker is recruiting, set status to 'recruitment_pending' so the order
+    // doesn't appear on homepages until the recruited worker accepts.
+    const orderStatus = hasRecruitment ? 'recruitment_pending' : 'accepted';
+
     // Update order status
     await orders.updateOne(
       { _id: new ObjectId(orderId) },
       { 
         $set: { 
-          status: 'accepted',
+          status: orderStatus,
           workerPhone: workerPhone,
           scheduledTime: scheduledTime,
           updatedAt: new Date()

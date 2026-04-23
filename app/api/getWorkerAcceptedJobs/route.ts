@@ -17,7 +17,8 @@ export async function GET(req: Request) {
         { mentorPhone: phone },
         { rookiePhone: phone }
       ],
-      status: { $in: ['accepted', 'ongoing', 'completed'] } 
+      // Include recruitment_pending so workers can see these in their jobs section
+      status: { $in: ['accepted', 'ongoing', 'completed', 'recruitment_pending'] } 
     }).sort({ updatedAt: -1 }).toArray();
 
     const transformedOrders = orders.map((order: any) => {

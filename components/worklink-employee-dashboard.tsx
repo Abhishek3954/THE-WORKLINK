@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
   Briefcase, Clock, MapPin, Star, Wallet, ChevronRight, User,
   Phone, Settings, Bell, Search, Filter, Zap, ArrowUpRight,
-  CheckCircle2, CircleDot, Calendar, Info, X, Loader2, Users, Trophy
+  CheckCircle2, CircleDot, Calendar, Info, X, Loader2, Users, Trophy,
+  AlertTriangle, RefreshCw, UserPlus, TrendingUp
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
@@ -49,6 +50,8 @@ export function WorkLinkEmployeeDashboard() {
   const [dbProfilePic, setDbProfilePic] = useState('')
   const [dbPrimarySkill, setDbPrimarySkill] = useState('Worker')
   const [dbRank, setDbRank] = useState(0)
+  const [dbRankPoints, setDbRankPoints] = useState(0)
+  const [rankUpPopup, setRankUpPopup] = useState<{show: boolean, newRank: number}>({show: false, newRank: 0})
   const [dbCity, setDbCity] = useState('')
   const [dbEarnings, setDbEarnings] = useState<any>(null)
   const [isOnline, setIsOnline] = useState(false)
@@ -70,6 +73,15 @@ export function WorkLinkEmployeeDashboard() {
   const [recruitmentRequests, setRecruitmentRequests] = useState<any[]>([])
   const [loadingRequests, setLoadingRequests] = useState(false)
 
+  // Decline handling states
+  const [declinedOrders, setDeclinedOrders] = useState<any[]>([])
+  const [showDeclineModal, setShowDeclineModal] = useState<any>(null)
+  const [reRecruitType, setReRecruitType] = useState<'none' | 'rookie' | 'mentor'>('none')
+  const [reAvailableWorkforce, setReAvailableWorkforce] = useState<any[]>([])
+  const [reLoadingWorkforce, setReLoadingWorkforce] = useState(false)
+  const [reSelectedPhone, setReSelectedPhone] = useState<string | null>(null)
+  const [declineActionLoading, setDeclineActionLoading] = useState(false)
+
   const handleTabChange = (tab: 'home' | 'jobs' | 'earnings' | 'profile' | 'workforce') => {
     setActiveTab(tab)
     sessionStorage.setItem('worklink_employee_activeTab', tab)
@@ -86,8 +98,20 @@ export function WorkLinkEmployeeDashboard() {
         setDbPrimarySkill(json.data.primarySkill || 'Employee')
         setIsOnline(json.data.isOnline || false)
         setDbRank(json.data.rank || 5)
+        setDbRankPoints(json.data.rankPoints || 0)
         setDbCity(json.data.city || 'Ludhiana')
         setDbEarnings(json.data.earnings || null)
+        
+        // Check for rank upgrade notification
+        if (json.data.rankUpgraded) {
+          setRankUpPopup({ show: true, newRank: json.data.rank })
+          // Clear the flag in the database
+          fetch('/api/worklink/profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: workerData.phone, rankUpgraded: false })
+          })
+        }
         
         // Sync context
         updateWorkerData({
@@ -183,6 +207,76 @@ export function WorkLinkEmployeeDashboard() {
     }
   }
 
+  const fetchDeclinedOrders = async () => {
+    if (!workerData.phone) return
+    try {
+      const res = await fetch(`/api/workforce/request?phone=${workerData.phone}&type=declined`)
+      const data = await res.json()
+      if (data.success && data.data.length > 0) {
+        setDeclinedOrders(data.data)
+        // Auto-show the first declined order popup
+        if (!showDeclineModal) {
+          setShowDeclineModal(data.data[0])
+        }
+      } else {
+        setDeclinedOrders([])
+      }
+    } catch (err) {
+      console.error("Fetch declined orders error:", err)
+    }
+  }
+
+  const handleWorkAlone = async (orderId: string) => {
+    setDeclineActionLoading(true)
+    try {
+      const res = await fetch('/api/workforce/request', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, action: 'work_alone' })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setShowDeclineModal(null)
+        setDeclinedOrders(prev => prev.filter(o => o.orderId !== orderId))
+        fetchAcceptedJobs()
+        handleTabChange('home')
+      }
+    } catch (err) {
+      console.error("Work alone error:", err)
+    } finally {
+      setDeclineActionLoading(false)
+    }
+  }
+
+  const handleReRequest = async (orderId: string) => {
+    if (!reSelectedPhone || reRecruitType === 'none') return
+    setDeclineActionLoading(true)
+    try {
+      const res = await fetch('/api/workforce/request', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId,
+          action: 're_request',
+          recruitedPhone: reSelectedPhone,
+          recruitmentType: reRecruitType
+        })
+      })
+      const data = await res.json()
+      if (data.success) {
+        setShowDeclineModal(null)
+        setReRecruitType('none')
+        setReSelectedPhone(null)
+        setReAvailableWorkforce([])
+        setDeclinedOrders(prev => prev.filter(o => o.orderId !== orderId))
+      }
+    } catch (err) {
+      console.error("Re-request error:", err)
+    } finally {
+      setDeclineActionLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (workerData.phone) fetchEmployeeData()
   }, [workerData.phone])
@@ -192,7 +286,12 @@ export function WorkLinkEmployeeDashboard() {
     if (activeTab === 'workforce') fetchRequests()
     if (activeTab === 'home') {
       fetchAcceptedJobs();
-      const interval = setInterval(fetchAcceptedJobs, 5000);
+      fetchDeclinedOrders();
+      fetchEmployeeData();
+      const interval = setInterval(() => {
+        fetchAcceptedJobs();
+        fetchDeclinedOrders();
+      }, 5000);
       return () => clearInterval(interval);
     }
   }, [activeTab, workerData.phone]);
@@ -217,6 +316,28 @@ export function WorkLinkEmployeeDashboard() {
     }
     fetchWorkforce()
   }, [recruitType, workerData.phone, dbCity])
+
+  // Fetch available workforce for re-recruitment
+  useEffect(() => {
+    const fetchReWorkforce = async () => {
+      if (reRecruitType !== 'none' && workerData.phone) {
+        setReLoadingWorkforce(true)
+        setReSelectedPhone(null)
+        try {
+          const res = await fetch(`/api/workforce/available?phone=${workerData.phone}&type=${reRecruitType}&city=${dbCity}`)
+          const data = await res.json()
+          if (data.success) {
+            setReAvailableWorkforce(data.data)
+          }
+        } catch (err) {
+          console.error("Fetch re-workforce error:", err)
+        } finally {
+          setReLoadingWorkforce(false)
+        }
+      }
+    }
+    fetchReWorkforce()
+  }, [reRecruitType, workerData.phone, dbCity])
 
   const handleHandleRequest = async (orderId: string, status: 'accepted' | 'declined') => {
     try {
@@ -249,7 +370,8 @@ export function WorkLinkEmployeeDashboard() {
         body: JSON.stringify({ 
           orderId: showAcceptModal._id, 
           workerPhone: workerData.phone, 
-          scheduledTime 
+          scheduledTime,
+          hasRecruitment: recruitType !== 'none' && !!selectedRecruitPhone
         })
       })
       const data = await res.json()
@@ -271,7 +393,12 @@ export function WorkLinkEmployeeDashboard() {
         setRecruitType('none')
         setSelectedRecruitPhone(null)
         fetchJobs()
-        handleTabChange('home')
+        // Only go to home if not recruiting (recruitment_pending orders shouldn't show on home)
+        if (recruitType === 'none' || !selectedRecruitPhone) {
+          handleTabChange('home')
+        } else {
+          fetchAcceptedJobs()
+        }
       } else {
         setError(data.error || 'Failed to accept job')
       }
@@ -302,7 +429,20 @@ export function WorkLinkEmployeeDashboard() {
                    Rank {dbRank}
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">{dbPrimarySkill}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <p className="text-xs text-muted-foreground">{dbPrimarySkill}</p>
+                {dbRank < 4 && (
+                  <div className="flex items-center gap-1">
+                    <div className="w-16 h-1.5 bg-violet-100 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-violet-500 to-violet-600 rounded-full transition-all duration-1000 ease-out"
+                        style={{ width: `${dbRankPoints}%` }}
+                      />
+                    </div>
+                    <span className="text-[8px] font-bold text-violet-400">{dbRankPoints}/100</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -364,15 +504,15 @@ export function WorkLinkEmployeeDashboard() {
                   </CardContent>
                 </Card>
 
-              {/* Active Assignments */}
-              {acceptedJobs.filter(j => j.status !== 'completed').length > 0 && (
+              {/* Active Assignments - exclude recruitment_pending */}
+              {acceptedJobs.filter(j => j.status === 'accepted' || j.status === 'ongoing').length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h2 className="font-bold text-foreground">My Assignments</h2>
-                    <span className="text-xs font-black text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">{acceptedJobs.filter(j => j.status !== 'completed').length}</span>
+                    <span className="text-xs font-black text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">{acceptedJobs.filter(j => j.status === 'accepted' || j.status === 'ongoing').length}</span>
                   </div>
                   <div className="space-y-3">
-                    {acceptedJobs.filter(j => j.status !== 'completed').map((job) => (
+                    {acceptedJobs.filter(j => j.status === 'accepted' || j.status === 'ongoing').map((job) => (
                       <Card key={job._id} className="border-violet-100 bg-violet-50/20 shadow-sm relative overflow-hidden group">
                         <CardContent className="p-5">
                           <div className="flex items-start justify-between">
@@ -425,6 +565,41 @@ export function WorkLinkEmployeeDashboard() {
                           >
                             {job.status === 'ongoing' ? 'RESUME PROTOCOL' : 'START PROTOCOL'}
                           </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Awaiting Recruitment Response - recruitment_pending orders */}
+              {acceptedJobs.filter(j => j.status === 'recruitment_pending').length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="font-bold text-foreground flex items-center gap-2">
+                      <Users className="w-4 h-4 text-amber-500" />
+                      Awaiting Recruitment
+                    </h2>
+                    <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-[8px] font-black uppercase">
+                      PENDING RESPONSE
+                    </Badge>
+                  </div>
+                  <div className="space-y-3">
+                    {acceptedJobs.filter(j => j.status === 'recruitment_pending').map((job) => (
+                      <Card key={job._id} className="border-amber-100 bg-amber-50/20 shadow-sm relative overflow-hidden">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                              <Clock className="w-5 h-5 text-amber-600" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="text-sm font-bold text-foreground">{job.mainSkill}</h4>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                Waiting for {job.recruitmentType} to accept • ₹{job.budget}
+                              </p>
+                            </div>
+                            <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
@@ -493,7 +668,7 @@ export function WorkLinkEmployeeDashboard() {
                 </div>
               )}
 
-              {acceptedJobs.filter(j => j.status !== 'completed').length === 0 && (
+              {acceptedJobs.filter(j => j.status === 'accepted' || j.status === 'ongoing').length === 0 && acceptedJobs.filter(j => j.status === 'recruitment_pending').length === 0 && (
                  <div className="p-8 bg-muted/30 rounded-3xl border border-dashed border-border text-center">
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm border border-border">
                         <Search className="w-6 h-6 text-muted-foreground" />
@@ -939,6 +1114,161 @@ export function WorkLinkEmployeeDashboard() {
           <Button onClick={() => setCompletionPopup(null)} className="w-full h-12 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-bold mt-6 shadow-xl uppercase tracking-widest text-[10px]">Acknowledge</Button>
         </DialogContent>
       </Dialog>
+
+      {/* Recruitment Declined Modal - Options for original worker */}
+      <Dialog open={!!showDeclineModal} onOpenChange={(open) => { if (!open) { setShowDeclineModal(null); setReRecruitType('none'); setReSelectedPhone(null); } }}>
+        <DialogContent className="sm:max-w-md bg-white rounded-3xl p-6 border-0 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <DialogHeader className="mb-2">
+            <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center mb-2">
+              <AlertTriangle className="w-6 h-6 text-red-500" />
+            </div>
+            <DialogTitle className="text-xl font-black text-gray-900 tracking-tight leading-none mb-1">Recruitment Declined</DialogTitle>
+            <DialogDescription className="text-xs font-medium text-gray-400">
+              Your recruitment request for <span className="font-bold text-gray-700">{showDeclineModal?.mainSkill}</span> (₹{showDeclineModal?.budget}) was declined.
+            </DialogDescription>
+          </DialogHeader>
+
+          {reRecruitType === 'none' ? (
+            <div className="space-y-3 mt-2">
+              <Button 
+                className="w-full h-14 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-violet-100"
+                disabled={declineActionLoading}
+                onClick={() => handleWorkAlone(showDeclineModal?.orderId)}
+              >
+                {declineActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
+                  <><Briefcase className="w-4 h-4 mr-2" /> Work Alone</>
+                )}
+              </Button>
+              <Button 
+                variant="outline"
+                className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] border-violet-200 text-violet-600 hover:bg-violet-50"
+                onClick={() => setReRecruitType(showDeclineModal?.recruitmentType || 'rookie')}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" /> Request Recruitment Again
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4 mt-2">
+              <div>
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Select Type</Label>
+                <div className="flex gap-2 mt-2">
+                  {['rookie', 'mentor'].map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setReRecruitType(type as any)}
+                      className={cn(
+                        "flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-tighter border transition-all",
+                        reRecruitType === type 
+                          ? "bg-violet-600 text-white border-violet-600 shadow-lg shadow-violet-100" 
+                          : "bg-white text-slate-400 border-slate-100 hover:border-violet-200"
+                      )}
+                    >
+                      Recruit {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="max-h-40 overflow-y-auto space-y-2">
+                {reLoadingWorkforce ? (
+                  <div className="py-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-violet-400" /></div>
+                ) : reAvailableWorkforce.length === 0 ? (
+                  <p className="text-[10px] text-gray-400 text-center py-2">No available {reRecruitType}s found.</p>
+                ) : (
+                  reAvailableWorkforce.map((w) => (
+                    <div 
+                      key={w.phone}
+                      onClick={() => setReSelectedPhone(w.phone)}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer",
+                        reSelectedPhone === w.phone 
+                          ? "bg-violet-50 border-violet-600 ring-1 ring-violet-600" 
+                          : "bg-white border-slate-100 hover:border-violet-200"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        {w.profileImage ? (
+                          <img src={w.profileImage} className="w-8 h-8 rounded-lg object-cover" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center text-violet-600 font-bold text-xs">{w.name.charAt(0)}</div>
+                        )}
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">{w.name}</p>
+                          <p className="text-[9px] text-slate-400 font-medium">Rank {w.rank} • {w.primarySkill}</p>
+                        </div>
+                      </div>
+                      {reSelectedPhone === w.phone && <CheckCircle2 className="w-4 h-4 text-violet-600" />}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <Button 
+                  variant="ghost"
+                  className="flex-1 h-12 rounded-2xl font-black text-slate-400 uppercase tracking-widest text-[10px]"
+                  onClick={() => { setReRecruitType('none'); setReSelectedPhone(null); }}
+                >
+                  Back
+                </Button>
+                <Button 
+                  className="flex-1 h-12 rounded-2xl bg-violet-600 hover:bg-violet-700 text-white font-black shadow-lg shadow-violet-100 uppercase tracking-widest text-[10px]"
+                  disabled={!reSelectedPhone || declineActionLoading}
+                  onClick={() => handleReRequest(showDeclineModal?.orderId)}
+                >
+                  {declineActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send Request'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Rank Up Celebration Popup */}
+      <Dialog open={rankUpPopup.show} onOpenChange={(open) => !open && setRankUpPopup({show: false, newRank: 0})}>
+        <DialogContent className="sm:max-w-xs bg-white rounded-3xl p-8 border-0 shadow-2xl animate-in zoom-in-50 duration-500">
+          <DialogHeader className="flex flex-col items-center text-center">
+            <div className="relative mb-4">
+              <div className="w-24 h-24 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-violet-200 animate-bounce">
+                <TrendingUp className="w-10 h-10 text-white" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-10 h-10 bg-amber-400 rounded-full flex items-center justify-center shadow-lg border-4 border-white">
+                <span className="text-sm font-black text-white">{rankUpPopup.newRank}</span>
+              </div>
+            </div>
+            <DialogTitle className="text-2xl font-black text-gray-900 tracking-tight leading-none">
+              Rank Up! 🎉
+            </DialogTitle>
+            <DialogDescription className="text-sm font-medium text-gray-500 mt-3">
+              Congratulations! You've been promoted to <span className="font-black text-violet-600">Rank {rankUpPopup.newRank}</span>!
+              {rankUpPopup.newRank === 4 && <span className="block mt-1 text-amber-600 font-bold">🏆 Maximum rank achieved!</span>}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center gap-1 mt-4">
+            {[1, 2, 3, 4].map((r) => (
+              <div 
+                key={r} 
+                className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black transition-all duration-500",
+                  r <= rankUpPopup.newRank 
+                    ? "bg-violet-600 text-white shadow-md scale-110" 
+                    : "bg-gray-100 text-gray-300"
+                )}
+              >
+                {r}
+              </div>
+            ))}
+          </div>
+          <Button 
+            onClick={() => setRankUpPopup({show: false, newRank: 0})} 
+            className="w-full h-12 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black mt-6 shadow-xl uppercase tracking-widest text-[10px]"
+          >
+            Awesome!
+          </Button>
+        </DialogContent>
+      </Dialog>
+
       <ConsumerDetailsModal 
         phone={selectedConsumerPhone} 
         onClose={() => setSelectedConsumerPhone(null)} 

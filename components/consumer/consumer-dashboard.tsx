@@ -410,7 +410,7 @@ function OrdersTab({ onEnlargeImage }: { onEnlargeImage: (url: string) => void }
           {orders.filter(o => o.status !== 'completed').map((order) => (
             <Card key={order._id} className="p-4 border-gray-100 shadow-sm relative overflow-hidden">
                <div className={`absolute top-0 right-0 w-1.5 h-full ${
-                order.status === 'pending' ? 'bg-amber-400' : 'bg-green-500'
+                (order.status === 'pending' || order.status === 'recruitment_pending') ? 'bg-amber-400' : 'bg-green-500'
               }`} />
               <div className="flex justify-between items-start mb-2">
                 <div>
@@ -439,11 +439,11 @@ function OrdersTab({ onEnlargeImage }: { onEnlargeImage: (url: string) => void }
               )}
               <div className="flex items-center justify-between pt-3 border-t border-gray-50">
                 <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1 uppercase tracking-tighter">
-                  <span className={`w-1.5 h-1.5 rounded-full ${order.status === 'pending' ? 'bg-amber-400 animate-pulse' : 'bg-green-500'}`} />
-                  {order.status}
+                  <span className={`w-1.5 h-1.5 rounded-full ${(order.status === 'pending' || order.status === 'recruitment_pending') ? 'bg-amber-400 animate-pulse' : 'bg-green-500'}`} />
+                  {order.status === 'recruitment_pending' ? 'pending' : order.status}
                 </span>
                 <div className="flex items-center gap-2">
-                  {order.status === 'pending' && (
+                  {(order.status === 'pending' || order.status === 'recruitment_pending') && (
                     <Button 
                       variant="outline" 
                       onClick={() => setOrderToDelete(order._id)}
@@ -748,7 +748,9 @@ export function ConsumerDashboard() {
       const res = await fetch(`/api/consumer/order?phone=${workerData.phone}`);
       const data = await res.json();
       if (data.success) {
-        setOngoingWork(data.data.filter((o: any) => o.status === 'accepted' || o.status === 'ongoing'));
+        // Exclude recruitment_pending from active orders on homepage
+        // recruitment_pending orders should appear as 'pending' in orders tab
+        setOngoingWork(data.data.filter((o: any) => (o.status === 'accepted' || o.status === 'ongoing') && o.status !== 'recruitment_pending'));
         setHistory(data.data.filter((o: any) => o.status === 'completed'));
       }
     } catch (err) {
@@ -758,6 +760,11 @@ export function ConsumerDashboard() {
 
   useEffect(() => {
     if (workerData.phone) fetchOrders();
+    // Poll on home tab to catch recruitment status changes
+    if (activeTab === 'home' && workerData.phone) {
+      const interval = setInterval(fetchOrders, 5000);
+      return () => clearInterval(interval);
+    }
   }, [workerData.phone, activeTab]);
 
   const handleUpdateStatus = (order: any, nextStatus: string) => {
