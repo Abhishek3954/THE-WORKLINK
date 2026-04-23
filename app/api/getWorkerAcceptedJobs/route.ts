@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { OrderModel } from '@/components/mongooseModels/orderModel';
+import { getDb } from '@/lib/db';
 
 export async function GET(req: Request) {
   try {
@@ -11,11 +10,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'Worker phone required' }, { status: 400 });
     }
 
-    await connectDB();
-    const orders = await OrderModel.find({ 
-      workerPhone: phone, 
+    const db = await getDb();
+    const orders = await db.collection('orders').find({ 
+      $or: [
+        { workerPhone: phone },
+        { mentorPhone: phone },
+        { rookiePhone: phone }
+      ],
       status: { $in: ['accepted', 'ongoing', 'completed'] } 
-    }).sort({ updatedAt: -1 }).lean();
+    }).sort({ updatedAt: -1 }).toArray();
 
     const transformedOrders = orders.map((order: any) => {
       if (order.image && order.image.data) {

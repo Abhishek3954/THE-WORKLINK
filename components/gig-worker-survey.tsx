@@ -165,7 +165,47 @@ export function GigWorkerSurvey() {
   const [regName, setRegName] = useState('')
   const [regPhone, setRegPhone] = useState('')
   const [regPassword, setRegPassword] = useState('')
-  const [regErrors, setRegErrors] = useState({ name: '', phone: '', password: '' })
+  const [regCity, setRegCity] = useState('')
+  const [regErrors, setRegErrors] = useState({ name: '', phone: '', password: '', city: '' })
+
+  // dev only
+  const autoFillWorker = (eligible: boolean) => {
+    const random = Math.floor(1000 + Math.random() * 9000);
+    const finalName = regName.trim() || `Test ${eligible ? 'Eligible' : 'Gig'} ${random}`;
+    const finalPhone = regPhone.trim() || `987654${random}`;
+    const finalPassword = regPassword.trim() || 'password123';
+    const finalCity = regCity.trim() || 'Ludhiana';
+    
+    updateWorkerData({ name: finalName, phone: finalPhone, password: finalPassword, city: finalCity });
+    
+    const mockProfile: any = {
+      primarySkill: 'electrical',
+      secondarySkills: ['Electrical Wiring', 'Switch / Board Repair'],
+      yearsOfExperience: eligible ? '5 – 10 years' : 'Less than 6 months',
+      workBackground: 'Self-employed',
+      jobsCompleted: eligible ? '200+' : '0 – 10',
+      toolsAvailability: eligible ? 'Complete professional tools' : 'No tools',
+      materialHandling: 'I can arrange materials',
+      workType: 'Full-time',
+      availability: 'Flexible',
+      jobPreference: ['Regular work'],
+      travelRange: 'Within 10 km',
+      travelWillingness: 'Within city',
+      hasVehicle: 'Yes',
+      languages: ['English', 'Hindi'],
+      paymentPreference: 'Per job',
+      expectedDailyIncome: '₹1200+',
+      idProofType: 'Aadhaar Card',
+      hasWorkPhotos: 'no',
+      hasCertification: 'no',
+      jobCommitment: eligible ? 'Always' : 'Depends on situation',
+      cancellationBehavior: eligible ? 'Never' : 'Sometimes',
+    };
+
+    setProfile(mockProfile);
+    setIsRegistration(false);
+    setStep(10); // Jump to last step or just submit
+  }
 
   const validateRegForm = () => {
     const newErrors = { name: '', phone: '', password: '' }
@@ -192,6 +232,11 @@ export function GigWorkerSurvey() {
       isValid = false
     }
 
+    if (!regCity.trim()) {
+      newErrors.city = 'Please enter your city'
+      isValid = false
+    }
+
     setRegErrors(newErrors)
     return isValid
   }
@@ -199,7 +244,7 @@ export function GigWorkerSurvey() {
   const handleRegSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (validateRegForm()) {
-      updateWorkerData({ name: regName, phone: regPhone, password: regPassword })
+      updateWorkerData({ name: regName, phone: regPhone, password: regPassword, city: regCity })
       setIsRegistration(false)
     }
   }
@@ -223,6 +268,7 @@ export function GigWorkerSurvey() {
           name: workerData.name,
           phone: workerData.phone,
           password: workerData.password,
+          city: workerData.city,
           ...profile,
         })
       })
@@ -824,14 +870,51 @@ export function GigWorkerSurvey() {
                       <p className="text-sm text-destructive">{regErrors.password}</p>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" onClick={() => setCurrentStep('sign-in')} className="flex-1">
-                      Back
-                    </Button>
-                    <Button type="submit" className="flex-1">
-                      Continue to Survey
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-city">City</Label>
+                    <Input
+                      id="reg-city"
+                      placeholder="Enter your city (e.g. Ludhiana)"
+                      value={regCity}
+                      onChange={(e) => setRegCity(e.target.value)}
+                      className={regErrors.city ? 'border-destructive' : ''}
+                    />
+                    {regErrors.city && (
+                      <p className="text-sm text-destructive">{regErrors.city}</p>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <Button type="button" variant="outline" onClick={() => setCurrentStep('sign-in')} className="flex-1">
+                        Back
+                      </Button>
+                      <Button type="submit" className="flex-1">
+                        Continue to Survey
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </div>
+
+                    {/* Development Buttons */}
+                    <div className="grid grid-cols-2 gap-2 border-t pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-[10px] bg-red-50 hover:bg-red-100 border-red-200 h-auto py-2"
+                        onClick={() => autoFillWorker(false)}
+                      >
+                        DEV: Auto Gig (Ineligible)
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-[10px] bg-green-50 hover:bg-green-100 border-green-200 h-auto py-2"
+                        onClick={() => autoFillWorker(true)}
+                      >
+                        DEV: Auto Gig (Eligible)
+                      </Button>
+                    </div>
                   </div>
                 </form>
               </CardContent>

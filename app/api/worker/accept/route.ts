@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { OrderModel } from '@/components/mongooseModels/orderModel';
+import { getDb } from '@/lib/db';
+import { ObjectId } from 'mongodb';
 
 export async function POST(req: Request) {
   try {
@@ -10,8 +10,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
     }
 
-    await connectDB();
-    const order = await OrderModel.findById(orderId);
+    const db = await getDb();
+    const orders = db.collection('orders');
+    
+    const order: any = await orders.findOne({ _id: new ObjectId(orderId) });
 
     if (!order) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
@@ -35,10 +37,17 @@ export async function POST(req: Request) {
     }
 
     // Update order status
-    order.status = 'accepted';
-    order.workerPhone = workerPhone;
-    order.scheduledTime = scheduledTime;
-    await order.save();
+    await orders.updateOne(
+      { _id: new ObjectId(orderId) },
+      { 
+        $set: { 
+          status: 'accepted',
+          workerPhone: workerPhone,
+          scheduledTime: scheduledTime,
+          updatedAt: new Date()
+        } 
+      }
+    );
 
     return NextResponse.json({ success: true, message: 'Job accepted successfully' });
   } catch (error) {

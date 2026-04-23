@@ -1,25 +1,28 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { workerData } from '@/components/mongooseModels/gigSurveyModel';
+import { getDb } from '@/lib/db';
 
 export async function PATCH(req: Request) {
   try {
-    await connectDB();
+    const db = await getDb();
+    const collection = db.collection('workerdata');
+    
     const { phone, isOnline } = await req.json();
 
     if (!phone) {
       return NextResponse.json({ success: false, error: 'Phone number required' }, { status: 400 });
     }
 
-    const worker = await workerData.findOneAndUpdate(
+    const result = await collection.findOneAndUpdate(
       { phone },
-      { isOnline },
-      { new: true }
+      { $set: { isOnline, updatedAt: new Date() } },
+      { returnDocument: 'after' }
     );
 
-    if (!worker) {
+    if (!result) {
       return NextResponse.json({ success: false, error: 'Worker not found' }, { status: 404 });
     }
+
+    const worker = (result as any).value || result;
 
     return NextResponse.json({ success: true, isOnline: worker.isOnline });
   } catch (error) {

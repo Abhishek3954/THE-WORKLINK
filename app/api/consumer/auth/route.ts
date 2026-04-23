@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { ConsumerModel } from '@/components/mongooseModels/consumerModel';
+import { getDb } from '@/lib/db';
 import crypto from 'crypto';
 
 export async function POST(req: Request) {
@@ -8,34 +7,57 @@ export async function POST(req: Request) {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
     
-    await connectDB();
-    const data = await req.json();
+    console.log(`Consumer Auth POST action: ${action}`);
+    
+    const db = await getDb();
+    const consumers = db.collection('consumers');
+
+    let data;
+    try {
+      data = await req.json();
+    } catch (e) {
+      console.error('Consumer API Error: Failed to parse JSON body');
+      return NextResponse.json({ success: false, error: 'Invalid or missing JSON body' }, { status: 400 });
+    }
 
     if (action === 'signup') {
       const { fullName, phone, city, password } = data;
       
-      const existingConsumer = await ConsumerModel.findOne({ phone });
+      if (!fullName || !phone || !city || !password) {
+        return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+      }
+
+      const existingConsumer = await consumers.findOne({ phone });
       if (existingConsumer) {
-        return NextResponse.json({ success: false, error: 'Phone number already registered' }, { status: 400 });
+        return NextResponse.json({ success: false, error: 'Phone number already registered as Consumer' }, { status: 400 });
+      }
+
+      // Check if phone number is registered as Worker
+      const existingWorker = await db.collection('workerdata').findOne({ phone });
+      if (existingWorker) {
+        return NextResponse.json({ success: false, error: 'This phone number is already registered as Worker' }, { status: 400 });
       }
 
       const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
 
-      const newConsumer = await ConsumerModel.create({
+      const result = await consumers.insertOne({
         fullName,
         phone,
         city,
         password: hashedPassword,
-        profileImage: '', // Initially empty
+        profileImage: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
 
-      return NextResponse.json({ success: true, data: { fullName: newConsumer.fullName, phone: newConsumer.phone, city: newConsumer.city, profileImage: '' } });
+      console.log('New consumer registered:', phone);
+      return NextResponse.json({ success: true, data: { fullName, phone, city, profileImage: '' } });
     }
 
     if (action === 'signin') {
       const { phone, password } = data;
       
-      const consumer = await ConsumerModel.findOne({ phone });
+      const consumer = await consumers.findOne({ phone });
       if (!consumer) {
         return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
       }
@@ -51,9 +73,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
 
-  } catch (error) {
-    console.error('Consumer API Error:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Consumer API Error (POST):', error);
+    
+    if (error.code === 11000) {
+      return NextResponse.json({ success: false, error: 'Phone number already registered' }, { status: 400 });
+    }
+
+    return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 
@@ -66,20 +93,19 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'Phone number required' }, { status: 400 });
     }
 
-    await connectDB();
-    const consumer = await ConsumerModel.findOne({ phone }).lean();
+    const db = await getDb();
+    const consumer = await db.collection('consumers').findOne({ phone });
     
     if (!consumer) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
 
-    // Explicitly add password removal if we were using .select('-password')
     if (consumer.password) delete consumer.password;
 
     return NextResponse.json({ success: true, data: consumer });
-  } catch (error) {
-    console.error('Consumer API Error:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Consumer API Error (GET):', error);
+    return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
 
@@ -88,38 +114,50 @@ export async function PUT(req: Request) {
     const { searchParams } = new URL(req.url);
     const action = searchParams.get('action');
 
-    await connectDB();
-    const data = await req.json();
+    const db = await getDb();
+    const consumers = db.collection('consumers');
     
-    // Profile Update Logic
+    let data;
+    try {
+      data = await req.json();
+    } catch (e) {
+      return NextResponse.json({ success: false, error: 'Invalid or missing JSON body' }, { status: 400 });
+    }
+    
     if (action === 'updateProfile') {
       const { currentPhone, fullName, phone, city, profileImage } = data;
       
-      const updateData: any = {};
+      const updateData: any = { updatedAt: new Date() };
       if (fullName) updateData.fullName = fullName;
       if (city) updateData.city = city;
       if (profileImage !== undefined) updateData.profileImage = profileImage;
 
-      // Ensure we check if the new phone is available if it's being changed
       if (phone && phone !== currentPhone) {
-        const phoneTaken = await ConsumerModel.findOne({ phone });
+        const phoneTaken = await consumers.findOne({ phone });
         if (phoneTaken) {
-          return NextResponse.json({ success: false, error: 'New phone number is already registered' }, { status: 400 });
+          return NextResponse.json({ success: false, error: 'New phone number is already registered as Consumer' }, { status: 400 });
+        }
+        
+        const workerTaken = await db.collection('workerdata').findOne({ phone });
+        if (workerTaken) {
+          return NextResponse.json({ success: false, error: 'New phone number is already registered as Worker' }, { status: 400 });
         }
         updateData.phone = phone;
       }
 
-      const updatedConsumer = await ConsumerModel.findOneAndUpdate(
+      const result = await consumers.findOneAndUpdate(
         { phone: currentPhone },
         { $set: updateData },
-        { new: true, strict: false } // strict: false allows saving fields not in original (cached) schema
-      ).lean();
+        { returnDocument: 'after' }
+      );
 
-      if (!updatedConsumer) {
+      if (!result) {
         return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
       }
 
-      console.log("Consumer profile updated successfully");
+      // In some versions of the driver, result is a ModifyResult with .value
+      const updatedConsumer = (result as any).value || result;
+
       return NextResponse.json({ 
         success: true, 
         message: 'Profile updated successfully', 
@@ -135,7 +173,7 @@ export async function PUT(req: Request) {
     if (action === 'changePassword') {
       const { phone, oldPassword, newPassword } = data;
 
-      const consumer = await ConsumerModel.findOne({ phone });
+      const consumer = await consumers.findOne({ phone });
       if (!consumer) {
         return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
       }
@@ -147,15 +185,18 @@ export async function PUT(req: Request) {
       }
 
       const hashedNewPassword = crypto.createHash('sha256').update(newPassword).digest('hex');
-      consumer.password = hashedNewPassword;
-      await consumer.save();
+      
+      await consumers.updateOne(
+        { phone },
+        { $set: { password: hashedNewPassword, updatedAt: new Date() } }
+      );
 
       return NextResponse.json({ success: true, message: 'Password updated successfully' });
     }
 
     return NextResponse.json({ success: false, error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
-    console.error('Consumer API Error:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Consumer API Error (PUT):', error);
+    return NextResponse.json({ success: false, error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }

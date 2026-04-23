@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
-import { connectDB } from '@/lib/db'
-import { workerData } from '@/components/mongooseModels/gigSurveyModel'
+import { getDb } from '@/lib/db'
 
 export async function GET(req: Request) {
   try {
-    await connectDB()
+    const db = await getDb();
+    const collection = db.collection('workerdata');
 
     const { searchParams } = new URL(req.url)
     const phone = searchParams.get('phone')
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
       )
     }
 
-    const worker: any = await workerData.findOne({ phone }).lean()
+    const worker: any = await collection.findOne({ phone });
 
     if (!worker) {
       return NextResponse.json(
@@ -41,6 +41,7 @@ export async function GET(req: Request) {
     )
 
   } catch (error) {
+    console.error('getGigData Error:', error);
     return NextResponse.json(
       { success: false, error: 'Server error' },
       { status: 500 }

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { connectDB } from '@/lib/db'
-import { workerData } from '@/components/mongooseModels/gigSurveyModel'
+import { getDb } from '@/lib/db'
 import crypto from 'crypto'
 
 export async function POST(req: Request) {
   try {
-    await connectDB()
+    const db = await getDb();
+    const collection = db.collection('workerdata');
 
     const body = await req.json()
     const { phone, updates } = body
@@ -17,7 +17,20 @@ export async function POST(req: Request) {
       )
     }
 
-    let finalUpdates = { ...updates }
+    let finalUpdates = { ...updates, updatedAt: new Date() }
+    
+    // Check if phone number is being updated
+    if (finalUpdates.phone && finalUpdates.phone !== phone) {
+      const workerTaken = await collection.findOne({ phone: finalUpdates.phone });
+      if (workerTaken) {
+        return NextResponse.json({ success: false, error: 'New phone number is already registered as Worker' }, { status: 409 });
+      }
+
+      const consumerTaken = await db.collection('consumers').findOne({ phone: finalUpdates.phone });
+      if (consumerTaken) {
+        return NextResponse.json({ success: false, error: 'New phone number is already registered as Consumer' }, { status: 409 });
+      }
+    }
     
     if (finalUpdates.password) {
         finalUpdates.password = crypto.createHash('sha256').update(finalUpdates.password).digest('hex'); 
@@ -35,18 +48,20 @@ export async function POST(req: Request) {
       delete finalUpdates.profilePic;
     }
 
-    const updatedWorker: any = await workerData.findOneAndUpdate(
+    const result = await collection.findOneAndUpdate(
       { phone },
       { $set: finalUpdates },
-      { new: true, runValidators: true }
-    ).lean()
+      { returnDocument: 'after' }
+    );
 
-    if (!updatedWorker) {
+    if (!result) {
       return NextResponse.json(
         { success: false, error: 'Worker not found' },
         { status: 404 }
       )
     }
+
+    const updatedWorker = (result as any).value || result;
 
     if (updatedWorker.profilePic && updatedWorker.profilePic.data) {
       const buffer = updatedWorker.profilePic.data.buffer || updatedWorker.profilePic.data;
@@ -64,6 +79,7 @@ export async function POST(req: Request) {
     )
 
   } catch (error: any) {
+    console.error('updateGigProfile Error:', error);
     return NextResponse.json(
       { success: false, error: 'Server error: ' + error.message },
       { status: 500 }

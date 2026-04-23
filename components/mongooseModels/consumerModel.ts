@@ -21,5 +21,8 @@ const ConsumerSchema: Schema = new Schema(
   { timestamps: true, strict: false }
 );
 
-export const ConsumerModel =
-  mongoose.models.Consumer || mongoose.model<IConsumer>('Consumer', ConsumerSchema);
+if (mongoose.models.Consumer) {
+  delete mongoose.models.Consumer;
+}
+
+export const ConsumerModel = mongoose.model<IConsumer>('Consumer', ConsumerSchema);

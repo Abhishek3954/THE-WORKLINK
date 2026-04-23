@@ -1,28 +1,32 @@
 import { NextResponse } from 'next/server'
-import { connectDB } from '@/lib/db'
-import { workerData } from '@/components/mongooseModels/gigSurveyModel'
+import { getDb } from '@/lib/db'
 
 export async function PATCH(req: Request) {
   try {
-    await connectDB()
+    const db = await getDb();
+    const collection = db.collection('workerdata');
+    
     const { phone, workerType } = await req.json()
 
     if (!phone || !workerType) {
       return NextResponse.json({ success: false, error: 'Phone and role are required' }, { status: 400 })
     }
 
-    const updatedWorker = await workerData.findOneAndUpdate(
+    const result = await collection.findOneAndUpdate(
       { phone },
-      { workerType },
-      { new: true }
+      { $set: { workerType, updatedAt: new Date() } },
+      { returnDocument: 'after' }
     )
 
-    if (!updatedWorker) {
+    if (!result) {
       return NextResponse.json({ success: false, error: 'Worker not found' }, { status: 404 })
     }
 
+    const updatedWorker = (result as any).value || result;
+
     return NextResponse.json({ success: true, data: updatedWorker })
   } catch (error: any) {
+    console.error('Worker Role API Error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

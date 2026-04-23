@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
-import { connectDB } from '@/lib/db'
-import { workerData } from '@/components/mongooseModels/gigSurveyModel'
+import { getDb } from '@/lib/db'
 
 export async function GET(req: Request) {
   try {
-    await connectDB()
+    const db = await getDb();
+    const collection = db.collection('workerdata');
+    
     const { searchParams } = new URL(req.url)
     const phone = searchParams.get('phone')
 
@@ -12,7 +13,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'Phone is required' }, { status: 400 })
     }
 
-    const worker: any = await workerData.findOne({ phone }).lean()
+    const worker: any = await collection.findOne({ phone });
     if (!worker) {
       return NextResponse.json({ success: false, error: 'Worker not found' }, { status: 404 })
     }
@@ -25,13 +26,16 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ success: true, data: worker })
   } catch (error: any) {
+    console.error('WorkLink Profile Error (GET):', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }
 
 export async function PUT(req: Request) {
   try {
-    await connectDB()
+    const db = await getDb();
+    const collection = db.collection('workerdata');
+    
     const body = await req.json()
     const { phone, ...updates } = body
 
@@ -39,18 +43,21 @@ export async function PUT(req: Request) {
       return NextResponse.json({ success: false, error: 'Phone is required' }, { status: 400 })
     }
 
-    const updatedWorker = await workerData.findOneAndUpdate(
+    const result = await collection.findOneAndUpdate(
       { phone },
-      { $set: updates },
-      { new: true }
+      { $set: { ...updates, updatedAt: new Date() } },
+      { returnDocument: 'after' }
     )
 
-    if (!updatedWorker) {
+    if (!result) {
       return NextResponse.json({ success: false, error: 'Worker not found' }, { status: 404 })
     }
 
+    const updatedWorker = (result as any).value || result;
+
     return NextResponse.json({ success: true, data: updatedWorker })
   } catch (error: any) {
+    console.error('WorkLink Profile Error (PUT):', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }

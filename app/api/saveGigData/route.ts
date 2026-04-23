@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
-import { connectDB } from '@/lib/db'
-import { workerData } from '@/components/mongooseModels/gigSurveyModel'
-import mongoose from 'mongoose'
+import { getDb } from '@/lib/db'
 import crypto from 'crypto'
 
 export async function POST(req: Request) {
   try {
-    await connectDB()
+    const db = await getDb();
+    const collection = db.collection('workerdata');
 
     const body = await req.json()
     const {
@@ -34,6 +33,7 @@ export async function POST(req: Request) {
       hasCertification,
       jobCommitment,
       cancellationBehavior,
+      city,
     } = body
 
     if (!name || !phone || !password) {
@@ -43,9 +43,27 @@ export async function POST(req: Request) {
       )
     }
 
+    // Check if phone number is already registered as Worker
+    const existingWorker = await collection.findOne({ phone });
+    if (existingWorker) {
+      return NextResponse.json(
+        { success: false, error: 'This phone number is already registered as Worker' },
+        { status: 409 }
+      )
+    }
+
+    // Check if phone number is registered as Consumer
+    const existingConsumer = await db.collection('consumers').findOne({ phone });
+    if (existingConsumer) {
+      return NextResponse.json(
+        { success: false, error: 'This phone number is already registered as Consumer' },
+        { status: 409 }
+      )
+    }
+
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex')
 
-    const newSignUp = await workerData.create({
+    const workerRecord = {
       name,
       phone,
       password: hashedPassword,
@@ -69,8 +87,15 @@ export async function POST(req: Request) {
       hasWorkPhotos,
       hasCertification,
       jobCommitment,
+      jobCommitment,
       cancellationBehavior,
-    })
+      city: city || 'Ludhiana',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+
+    const result = await collection.insertOne(workerRecord);
+    const newSignUp = { ...workerRecord, _id: result.insertedId };
 
     return NextResponse.json(
       { success: true, data: newSignUp },
@@ -84,9 +109,10 @@ export async function POST(req: Request) {
         { status: 409 }
       )
     }
+    console.error('saveGigData Error:', error);
     return NextResponse.json(
       { success: false, error: 'Server error' },
       { status: 500 }
     )
   }
-}
+}

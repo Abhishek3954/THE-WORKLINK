@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { workerData } from '@/components/mongooseModels/gigSurveyModel';
+import { getDb } from '@/lib/db';
 
 export async function GET(req: Request) {
   try {
@@ -11,8 +10,8 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'Worker phone required' }, { status: 400 });
     }
 
-    await connectDB();
-    const worker = await workerData.findOne({ phone }).lean();
+    const db = await getDb();
+    const worker: any = await db.collection('workerdata').findOne({ phone });
 
     if (!worker) {
       return NextResponse.json({ success: false, error: 'Worker not found' }, { status: 404 });

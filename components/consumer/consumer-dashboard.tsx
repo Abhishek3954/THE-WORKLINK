@@ -168,7 +168,7 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                       <p className="text-[11px] text-gray-500 flex items-center gap-1.5">
                         <Star className="w-3 h-3 text-amber-400" />
                         Payment: <span className="font-black text-gray-900">
-                          {work.paymentStatus === 'half' ? '50% PAID' : 'PENDING'}
+                          {work.paymentStatus === 'half' ? '50% PAID' : work.paymentStatus === 'final' ? '100% PAID' : 'PENDING'}
                         </span>
                       </p>
                     </div>
@@ -780,7 +780,7 @@ export function ConsumerDashboard() {
         body: JSON.stringify({ 
           id: paymentModal.orderId, 
           status: paymentModal.nextStatus,
-          paymentStatus: paymentModal.stage === 'initial' ? 'half' : 'full'
+          paymentStatus: paymentModal.stage === 'initial' ? 'half' : 'final'
         })
       });
       const data = await res.json();

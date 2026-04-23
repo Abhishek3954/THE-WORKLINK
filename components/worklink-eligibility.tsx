@@ -87,7 +87,7 @@ export function WorkLinkEligibility() {
   }
 
   const handleBack = () => {
-    setCurrentStep('gig-profile-complete')
+    setCurrentStep('dashboard')
   }
 
   const passedCount = criteria.filter(c => c.passed).length

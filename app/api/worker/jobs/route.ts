@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { OrderModel } from '@/components/mongooseModels/orderModel';
-import { workerData } from '@/components/mongooseModels/gigSurveyModel';
+import { getDb } from '@/lib/db';
 
 const PRIMARY_SKILLS_MAP: Record<string, string> = {
   'electrical': 'Electrician',
@@ -23,30 +21,26 @@ export async function GET(req: Request) {
       return NextResponse.json({ success: false, error: 'Worker phone required' }, { status: 400 });
     }
 
-    await connectDB();
-    const worker = await workerData.findOne({ phone }).lean();
+    const db = await getDb();
+    const worker: any = await db.collection('workerdata').findOne({ phone });
 
     if (!worker) {
       return NextResponse.json({ success: false, error: 'Worker not found' }, { status: 404 });
     }
 
-    // Prepare skills list for matching
     const primarySkillLabel = PRIMARY_SKILLS_MAP[worker.primarySkill as string] || worker.primarySkill;
     const workerSkills = [
       (primarySkillLabel as string).toLowerCase(),
       ...((worker.secondarySkills as string[]) || []).map(s => s.toLowerCase())
     ];
 
-    // Fetch pending orders of matching workerType
-    const pendingOrders = await OrderModel.find({ 
+    const pendingOrders = await db.collection('orders').find({ 
       status: 'pending',
       workerType: worker.workerType || 'gig'
-    }).sort({ createdAt: -1 }).lean();
+    }).sort({ createdAt: -1 }).toArray();
 
-    // Filter jobs by matching skills
-    const matchingJobs = pendingOrders.filter(order => {
+    const matchingJobs = pendingOrders.filter((order: any) => {
       const orderSkill = order.mainSkill.toLowerCase();
-      // Match if order skill matches any of worker's skills
       return workerSkills.includes(orderSkill) || workerSkills.some(ws => orderSkill.includes(ws));
     });
 

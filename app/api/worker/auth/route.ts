@@ -1,40 +1,56 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
-import { workerData } from '@/components/mongooseModels/gigSurveyModel';
+import { getDb } from '@/lib/db';
 import crypto from 'crypto';
 
 export async function POST(req: Request) {
   try {
-    await connectDB();
-    const { phone, password } = await req.json();
+    const db = await getDb();
+    const collection = db.collection('workerdata');
+    
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return NextResponse.json({ success: false, error: 'Invalid JSON body' }, { status: 400 });
+    }
+
+    const { phone, password } = body;
 
     if (!phone || !password) {
       return NextResponse.json({ success: false, error: 'Phone and password are required' }, { status: 400 });
     }
 
-    const worker = await workerData.findOne({ phone });
+    const worker: any = await collection.findOne({ phone });
     if (!worker) {
-      return NextResponse.json({ success: false, error: 'Worker not found' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'Worker not found' }, { status: 403 }); // Changed from 404 to be more standard for auth
     }
 
     const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
 
-    // Support both hashed and legacy plain text passwords during transition if needed, 
-    // but the saveGigData API hashes them, so mostly hashed.
+    // Support both hashed and plain text passwords (for legacy/testing)
     if (worker.password !== hashedPassword && worker.password !== password) {
       return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Convert profilePic to base64 if it exists as Buffer
     let profilePic = '';
-    if (worker.profilePic && worker.profilePic.data) {
-      const buffer = worker.profilePic.data.buffer || worker.profilePic.data;
-      const b64 = Buffer.from(buffer).toString('base64');
-      profilePic = `data:${worker.profilePic.contentType};base64,${b64}`;
-    } else if (typeof worker.profilePic === 'string') {
-      profilePic = worker.profilePic;
+    if (worker.profilePic) {
+      if (worker.profilePic.data) {
+        try {
+          // Native MongoDB driver returns Binary objects which have a .buffer property
+          const bufferContent = worker.profilePic.data.buffer || worker.profilePic.data;
+          const b64 = Buffer.from(bufferContent).toString('base64');
+          profilePic = `data:${worker.profilePic.contentType || 'image/jpeg'};base64,${b64}`;
+        } catch (err) {
+          console.error('Error processing profile pic:', err);
+          // Fallback to existing profilePic if it's already a string or just empty
+          profilePic = typeof worker.profilePic === 'string' ? worker.profilePic : '';
+        }
+      } else if (typeof worker.profilePic === 'string') {
+        profilePic = worker.profilePic;
+      }
     }
 
+    // Success - return user data
     return NextResponse.json({ 
       success: true, 
       data: {
@@ -68,8 +84,13 @@ export async function POST(req: Request) {
       } 
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Worker Auth Error:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Internal Server Error',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }, { status: 500 });
   }
 }

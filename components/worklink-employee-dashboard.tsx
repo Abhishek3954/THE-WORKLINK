@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
   Briefcase, Clock, MapPin, Star, Wallet, ChevronRight, User,
   Phone, Settings, Bell, Search, Filter, Zap, ArrowUpRight,
-  CheckCircle2, CircleDot, Calendar, Info, X, Loader2
+  CheckCircle2, CircleDot, Calendar, Info, X, Loader2, Users, Trophy
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
@@ -39,7 +39,7 @@ function renderImage(imageObj: any) {
 
 export function WorkLinkEmployeeDashboard() {
   const { workerData, setCurrentStep, updateWorkerData } = useWorkflow()
-  const [activeTab, setActiveTab] = useState<'home' | 'jobs' | 'earnings' | 'profile'>(() => {
+  const [activeTab, setActiveTab] = useState<'home' | 'jobs' | 'earnings' | 'profile' | 'workforce'>(() => {
     if (typeof window !== 'undefined') {
       return (sessionStorage.getItem('worklink_employee_activeTab') as any) || 'home'
     }
@@ -48,6 +48,9 @@ export function WorkLinkEmployeeDashboard() {
   const [dbName, setDbName] = useState(workerData.name)
   const [dbProfilePic, setDbProfilePic] = useState('')
   const [dbPrimarySkill, setDbPrimarySkill] = useState('Worker')
+  const [dbRank, setDbRank] = useState(0)
+  const [dbCity, setDbCity] = useState('')
+  const [dbEarnings, setDbEarnings] = useState<any>(null)
   const [isOnline, setIsOnline] = useState(false)
   const [jobs, setJobs] = useState<any[]>([])
   const [acceptedJobs, setAcceptedJobs] = useState<any[]>([])
@@ -59,37 +62,45 @@ export function WorkLinkEmployeeDashboard() {
   const [selectedFullImage, setSelectedFullImage] = useState<string | null>(null)
   const [selectedConsumerPhone, setSelectedConsumerPhone] = useState<string | null>(null)
 
-  const handleTabChange = (tab: 'home' | 'jobs' | 'earnings' | 'profile') => {
+  // Recruitment States
+  const [recruitType, setRecruitType] = useState<'none' | 'rookie' | 'mentor'>('none')
+  const [availableWorkforce, setAvailableWorkforce] = useState<any[]>([])
+  const [loadingWorkforce, setLoadingWorkforce] = useState(false)
+  const [selectedRecruitPhone, setSelectedRecruitPhone] = useState<string | null>(null)
+  const [recruitmentRequests, setRecruitmentRequests] = useState<any[]>([])
+  const [loadingRequests, setLoadingRequests] = useState(false)
+
+  const handleTabChange = (tab: 'home' | 'jobs' | 'earnings' | 'profile' | 'workforce') => {
     setActiveTab(tab)
     sessionStorage.setItem('worklink_employee_activeTab', tab)
   }
 
-  useEffect(() => {
-    const fetchEmployeeData = async () => {
-      try {
-        const res = await fetch(`/api/worklink/profile?phone=${workerData.phone}`)
-        const json = await res.json()
-        if (json.success && json.data) {
-          setDbName(json.data.name)
-          setDbProfilePic(json.data.profilePic || '')
-          setDbPrimarySkill(json.data.primarySkill || 'Employee')
-          setIsOnline(json.data.isOnline || false)
-          
-          // Sync context
-          updateWorkerData({
-            name: json.data.name,
-            profileImage: json.data.profilePic || '',
-            workerType: 'worklink'
-          })
-        }
-      } catch (err) {
-        console.error("Fetch employee data error:", err)
+  const fetchEmployeeData = async () => {
+    if (!workerData.phone) return
+    try {
+      const res = await fetch(`/api/worklink/profile?phone=${workerData.phone}`)
+      const json = await res.json()
+      if (json.success && json.data) {
+        setDbName(json.data.name)
+        setDbProfilePic(json.data.profilePic || '')
+        setDbPrimarySkill(json.data.primarySkill || 'Employee')
+        setIsOnline(json.data.isOnline || false)
+        setDbRank(json.data.rank || 5)
+        setDbCity(json.data.city || 'Ludhiana')
+        setDbEarnings(json.data.earnings || null)
+        
+        // Sync context
+        updateWorkerData({
+          name: json.data.name,
+          profileImage: json.data.profilePic || '',
+          workerType: 'worklink',
+          phone: json.data.phone
+        })
       }
+    } catch (err) {
+      console.error("Fetch employee data error:", err)
     }
-    if (workerData.phone) {
-      fetchEmployeeData()
-    }
-  }, [workerData.phone])
+  }
 
   const toggleOnline = async () => {
     try {
@@ -135,15 +146,11 @@ export function WorkLinkEmployeeDashboard() {
         // Detect status or rating changes
         data.data.forEach((job: any) => {
           const prevState = lastOrderState[job._id];
-          
-          // Case 1: Job Completed
           if (prevState && prevState.status !== 'completed' && job.status === 'completed') {
             setCompletionPopup(job);
           }
-          
-          // Case 2: Rating Received (after completion)
           if (prevState && prevState.status === 'completed' && !prevState.rating && job.rating) {
-            setCompletionPopup(job); // Re-show or show rating update
+            setCompletionPopup(job);
           }
         });
 
@@ -160,14 +167,74 @@ export function WorkLinkEmployeeDashboard() {
     }
   }
 
+  const fetchRequests = async () => {
+    if (!workerData.phone) return
+    setLoadingRequests(true)
+    try {
+      const res = await fetch(`/api/workforce/request?phone=${workerData.phone}`)
+      const data = await res.json()
+      if (data.success) {
+        setRecruitmentRequests(data.data)
+      }
+    } catch (err) {
+      console.error("Fetch requests error:", err)
+    } finally {
+      setLoadingRequests(false)
+    }
+  }
+
+  useEffect(() => {
+    if (workerData.phone) fetchEmployeeData()
+  }, [workerData.phone])
+
   useEffect(() => {
     if (activeTab === 'jobs') fetchJobs()
+    if (activeTab === 'workforce') fetchRequests()
     if (activeTab === 'home') {
       fetchAcceptedJobs();
       const interval = setInterval(fetchAcceptedJobs, 5000);
       return () => clearInterval(interval);
     }
   }, [activeTab, workerData.phone]);
+
+  useEffect(() => {
+    const fetchWorkforce = async () => {
+      if (recruitType !== 'none' && workerData.phone) {
+        setLoadingWorkforce(true)
+        setSelectedRecruitPhone(null)
+        try {
+          const res = await fetch(`/api/workforce/available?phone=${workerData.phone}&type=${recruitType}&city=${dbCity}`)
+          const data = await res.json()
+          if (data.success) {
+            setAvailableWorkforce(data.data)
+          }
+        } catch (err) {
+          console.error("Fetch workforce error:", err)
+        } finally {
+          setLoadingWorkforce(false)
+        }
+      }
+    }
+    fetchWorkforce()
+  }, [recruitType, workerData.phone, dbCity])
+
+  const handleHandleRequest = async (orderId: string, status: 'accepted' | 'declined') => {
+    try {
+      const res = await fetch('/api/workforce/request', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status })
+      })
+      const data = await res.json()
+      if (data.success) {
+        fetchRequests()
+        fetchEmployeeData()
+        if (status === 'accepted') handleTabChange('home')
+      }
+    } catch (err) {
+      console.error("Handle request error:", err)
+    }
+  }
 
   const handleAcceptJob = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -187,8 +254,22 @@ export function WorkLinkEmployeeDashboard() {
       })
       const data = await res.json()
       if (data.success) {
+        if (recruitType !== 'none' && selectedRecruitPhone) {
+          await fetch('/api/workforce/request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderId: showAcceptModal._id,
+              recruiterPhone: workerData.phone,
+              recruitedPhone: selectedRecruitPhone,
+              type: recruitType
+            })
+          })
+        }
         setShowAcceptModal(null)
         setScheduledTime('')
+        setRecruitType('none')
+        setSelectedRecruitPhone(null)
         fetchJobs()
         handleTabChange('home')
       } else {
@@ -218,7 +299,7 @@ export function WorkLinkEmployeeDashboard() {
               <div className="flex items-center gap-1.5">
                 <p className="font-semibold text-foreground text-sm">Hi, {dbName.split(' ')[0]}</p>
                 <div className="px-1.5 py-0.5 rounded-full bg-violet-600 text-white text-[8px] font-black uppercase flex items-center gap-0.5">
-                   Employee
+                   Rank {dbRank}
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">{dbPrimarySkill}</p>
@@ -270,20 +351,18 @@ export function WorkLinkEmployeeDashboard() {
               </Card>
 
               {/* Stats Grid - Gig Style */}
-              <div className="grid grid-cols-2 gap-3">
                 <Card className="text-center shadow-sm">
                   <CardContent className="py-5 px-2">
-                    <p className="text-2xl font-black text-foreground">12</p>
+                    <p className="text-2xl font-black text-foreground">{acceptedJobs.filter(j => j.status === 'completed').length}</p>
                     <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Jobs Done</p>
                   </CardContent>
                 </Card>
                 <Card className="text-center shadow-sm">
                   <CardContent className="py-5 px-2">
-                    <p className="text-2xl font-black text-foreground">₹8.4k</p>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Earned</p>
+                    <p className="text-2xl font-black text-foreground">₹{dbEarnings?.balance || 0}</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Earnings</p>
                   </CardContent>
                 </Card>
-              </div>
 
               {/* Active Assignments */}
               {acceptedJobs.filter(j => j.status !== 'completed').length > 0 && (
@@ -507,15 +586,133 @@ export function WorkLinkEmployeeDashboard() {
           {activeTab === 'profile' && <GigWorkerProfile />}
 
           {activeTab === 'earnings' && (
-            <div className="py-20 text-center space-y-4">
-              <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-sm border border-border">
-                <Wallet className="w-8 h-8 text-muted-foreground" />
+            <div className="space-y-6">
+              <div className="text-center py-6">
+                <h2 className="text-3xl font-black text-slate-900 leading-none">₹{dbEarnings?.balance || 0}</h2>
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-2">Total Managed Balance</p>
               </div>
-              <div>
-                <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight leading-none mb-1">Earning Protocol</h3>
-                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-widest px-10">Payroll tracking and payout settings are coming soon for employees.</p>
+
+              {/* Bonus Section */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1">
+                  <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-amber-500" />
+                    Bonus Earnings
+                  </h3>
+                  <span className="text-[9px] font-black text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full">WORKFORCE REWARDS</span>
+                </div>
+
+                {dbEarnings?.bonuses?.length > 0 ? (
+                  <div className="space-y-2">
+                    {dbEarnings.bonuses.map((bonus: any, idx: number) => (
+                      <Card key={idx} className="border-border/50 shadow-none bg-slate-50/50">
+                        <CardContent className="p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                                <Zap className="w-4 h-4 text-amber-600" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-slate-900">{bonus.type}</p>
+                                <p className="text-[10px] text-muted-foreground uppercase">{new Date(bonus.date).toLocaleDateString()}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-black text-green-600">+₹{bonus.amount}</p>
+                              <Badge className="bg-amber-100 text-amber-700 border-none text-[8px] h-4 font-black">BONUS</Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-10 border border-dashed border-border rounded-3xl text-center bg-muted/20">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">No bonuses earned yet</p>
+                  </div>
+                )}
               </div>
-              <Button variant="outline" className="border-border text-slate-600 font-black h-10 px-6 rounded-xl text-[11px] tracking-widest">VIEW HISTORY</Button>
+
+              <div className="pt-20 text-center space-y-4">
+                <div className="w-16 h-16 bg-muted rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-sm border border-border">
+                  <Wallet className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight leading-none mb-1">Earning Protocol</h3>
+                  <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-widest px-10">Payroll tracking and payout settings are coming soon for employees.</p>
+                </div>
+                <Button variant="outline" className="border-border text-slate-600 font-black h-10 px-6 rounded-xl text-[11px] tracking-widest">VIEW HISTORY</Button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'workforce' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-black text-foreground tracking-tight">Workforce Development</h2>
+                <Badge className="bg-violet-600 text-white uppercase text-[8px] font-black">PENDING REQUESTS</Badge>
+              </div>
+
+              {loadingRequests ? (
+                <div className="py-20 flex flex-col items-center">
+                  <Loader2 className="w-8 h-8 text-violet-600 animate-spin mb-4" />
+                  <p className="text-[10px] font-black text-muted-foreground uppercase">Scanning for invitations...</p>
+                </div>
+              ) : recruitmentRequests.length === 0 ? (
+                <div className="py-20 text-center bg-slate-50 border border-dashed border-border rounded-3xl">
+                  <Users className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm font-bold text-slate-800 uppercase tracking-tight mb-1">No Active Requests</p>
+                  <p className="text-[10px] text-muted-foreground font-medium px-12">Recruitment invitations from other employees will appear here.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                   {recruitmentRequests.map((req) => (
+                     <Card key={req.orderId} className="border-violet-200 bg-violet-50/20 shadow-sm relative overflow-hidden">
+                        <div className="p-5">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-white border border-violet-100 flex items-center justify-center overflow-hidden">
+                                {req.recruiterImage ? <img src={req.recruiterImage} className="w-full h-full object-cover" /> : <User className="text-violet-400" />}
+                              </div>
+                              <div>
+                                <h4 className="text-sm font-black text-slate-900 leading-tight">{req.recruiterName}</h4>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                   <Badge className="bg-violet-600 text-white text-[8px] h-3.5 px-1 font-black">RANK {req.recruiterRank}</Badge>
+                                   <p className="text-[9px] font-bold text-muted-foreground uppercase">Needs a {req.type}</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                               <p className="text-[8px] font-black text-violet-500 uppercase">Shared Budget</p>
+                               <p className="text-lg font-black text-slate-900 leading-none">₹{req.budget}</p>
+                            </div>
+                          </div>
+                          
+                          <div className="bg-white rounded-xl p-3 border border-violet-100 mb-4">
+                             <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">JOB PROTOCOL</p>
+                             <p className="text-xs font-bold text-slate-700">{req.mainSkill}</p>
+                          </div>
+
+                          <div className="flex gap-2">
+                             <Button 
+                               variant="outline" 
+                               className="flex-1 h-10 rounded-xl font-bold text-[10px] uppercase border-red-100 text-red-500 hover:bg-red-50"
+                               onClick={() => handleHandleRequest(req.orderId, 'declined')}
+                             >
+                               Decline
+                             </Button>
+                             <Button 
+                               className="flex-1 h-10 rounded-xl bg-violet-600 hover:bg-violet-700 font-bold text-[10px] uppercase shadow-md shadow-violet-100"
+                               onClick={() => handleHandleRequest(req.orderId, 'accepted')}
+                             >
+                               Accept & Join
+                             </Button>
+                          </div>
+                        </div>
+                     </Card>
+                   ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -528,6 +725,7 @@ export function WorkLinkEmployeeDashboard() {
           {[
             { id: 'home', icon: Briefcase, label: 'Home' },
             { id: 'jobs', icon: Search, label: 'Jobs' },
+            { id: 'workforce', icon: Users, label: 'Workforce' },
             { id: 'earnings', icon: Wallet, label: 'Earnings' },
             { id: 'profile', icon: User, label: 'Profile' },
           ].map((tab) => (
@@ -566,16 +764,79 @@ export function WorkLinkEmployeeDashboard() {
             
             return (
           <form onSubmit={handleAcceptJob} className="space-y-5">
-            <div className="bg-slate-50 rounded-2xl p-4 space-y-2 border border-slate-100">
-               <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-400">
-                 <span>Contract Budget</span>
-                 <span className="text-violet-600 font-black text-sm">₹{showAcceptModal?.budget}</span>
-               </div>
-               <p className="text-xs text-slate-500 font-medium italic leading-relaxed">"{showAcceptModal?.description}"</p>
-            </div>
+              <div className="bg-slate-50 rounded-2xl p-4 space-y-2 border border-slate-100">
+                <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-400">
+                  <span>Contract Budget</span>
+                  <span className="text-violet-600 font-black text-sm">₹{showAcceptModal?.budget}</span>
+                </div>
+                <p className="text-xs text-slate-500 font-medium italic leading-relaxed">"{showAcceptModal?.description}"</p>
+              </div>
 
-            <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Arrival Time Schedule</Label>
+              {/* Recruitment Options */}
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Team Protocol (Optional)</Label>
+                <div className="flex gap-2">
+                   {['none', 'rookie', 'mentor'].map((type) => (
+                     <button
+                       key={type}
+                       type="button"
+                       onClick={() => setRecruitType(type as any)}
+                       className={cn(
+                         "flex-1 py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-tighter border transition-all",
+                         recruitType === type 
+                           ? "bg-violet-600 text-white border-violet-600 shadow-lg shadow-violet-100" 
+                           : "bg-white text-slate-400 border-slate-100 hover:border-violet-200"
+                       )}
+                     >
+                       {type === 'none' ? 'Solo' : `Recruit ${type}`}
+                     </button>
+                   ))}
+                </div>
+
+                {recruitType !== 'none' && (
+                  <div className="space-y-2">
+                    <Label className="text-[9px] font-bold text-gray-400 uppercase italic ml-1">
+                       Available {recruitType === 'rookie' ? 'Rookies (Lower Rank)' : 'Mentors (Higher Rank)'} in {dbCity}
+                    </Label>
+                    <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+                      {loadingWorkforce ? (
+                        <div className="py-4 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-violet-400" /></div>
+                      ) : availableWorkforce.length === 0 ? (
+                        <p className="text-[10px] text-gray-400 text-center py-2">No available {recruitType}s found in your city.</p>
+                      ) : (
+                        availableWorkforce.map((w) => (
+                          <div 
+                            key={w.phone}
+                            onClick={() => setSelectedRecruitPhone(w.phone)}
+                            className={cn(
+                              "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer",
+                              selectedRecruitPhone === w.phone 
+                                ? "bg-violet-50 border-violet-600 ring-1 ring-violet-600" 
+                                : "bg-white border-slate-100 hover:border-violet-200"
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              {w.profileImage ? (
+                                <img src={w.profileImage} className="w-8 h-8 rounded-lg object-cover" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center text-violet-600 font-bold text-xs">{w.name.charAt(0)}</div>
+                              )}
+                              <div>
+                                <p className="text-xs font-bold text-slate-800">{w.name}</p>
+                                <p className="text-[9px] text-slate-400 font-medium">Rank {w.rank} • {w.primarySkill}</p>
+                              </div>
+                            </div>
+                            {selectedRecruitPhone === w.phone && <CheckCircle2 className="w-4 h-4 text-violet-600" />}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Arrival Time Schedule</Label>
               <div className="relative">
                 <Calendar className="absolute left-4 top-4 w-4 h-4 text-violet-400" />
                 <Input 
