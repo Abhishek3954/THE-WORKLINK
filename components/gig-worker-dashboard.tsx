@@ -82,7 +82,7 @@ export function GigWorkerDashboard() {
   useEffect(() => {
     const fetchWorkerData = async () => {
       try {
-        const res = await fetch(`/api/getGigData?phone=${workerData.phone}`)
+        const res = await fetch(`/api/getGigData?phone=${workerData.phone}`, { cache: 'no-store' })
         const json = await res.json()
         if (json.success && json.data) {
           setDbName(json.data.name)
@@ -93,9 +93,16 @@ export function GigWorkerDashboard() {
               : 'Worker'
           )
           setIsOnline(json.data.isOnline || false)
+          
+          // Sync context
+          updateWorkerData({
+            name: json.data.name,
+            profileImage: json.data.profilePic || '',
+            phone: json.data.phone
+          })
         }
       } catch (err) {
-        // fallback to context data already set as defaults
+        console.error("Fetch worker data error:", err)
       }
     }
     if (workerData.phone) {
@@ -123,7 +130,7 @@ export function GigWorkerDashboard() {
     if (!workerData.phone) return
     setLoadingJobs(true)
     try {
-      const res = await fetch(`/api/worker/jobs?phone=${workerData.phone}`)
+      const res = await fetch(`/api/worker/jobs?phone=${workerData.phone}`, { cache: 'no-store' })
       const data = await res.json()
       if (data.success) {
         setJobs(data.data)
@@ -141,7 +148,7 @@ export function GigWorkerDashboard() {
   const fetchAcceptedJobs = async () => {
     if (!workerData.phone) return
     try {
-      const res = await fetch(`/api/getWorkerAcceptedJobs?phone=${workerData.phone}`)
+      const res = await fetch(`/api/getWorkerAcceptedJobs?phone=${workerData.phone}`, { cache: 'no-store' })
       const data = await res.json()
       if (data.success) {
         // Detect payment/status/rating changes

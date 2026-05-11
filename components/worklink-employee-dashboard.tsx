@@ -90,7 +90,7 @@ export function WorkLinkEmployeeDashboard() {
   const fetchEmployeeData = async () => {
     if (!workerData.phone) return
     try {
-      const res = await fetch(`/api/worklink/profile?phone=${workerData.phone}`)
+      const res = await fetch(`/api/worklink/profile?phone=${workerData.phone}`, { cache: 'no-store' })
       const json = await res.json()
       if (json.success && json.data) {
         setDbName(json.data.name)
@@ -146,7 +146,7 @@ export function WorkLinkEmployeeDashboard() {
     if (!workerData.phone) return
     setLoadingJobs(true)
     try {
-      const res = await fetch(`/api/worker/jobs?phone=${workerData.phone}&priority=true`)
+      const res = await fetch(`/api/worker/jobs?phone=${workerData.phone}&priority=true`, { cache: 'no-store' })
       const data = await res.json()
       if (data.success) {
         setJobs(data.data)
@@ -164,7 +164,7 @@ export function WorkLinkEmployeeDashboard() {
   const fetchAcceptedJobs = async () => {
     if (!workerData.phone) return
     try {
-      const res = await fetch(`/api/getWorkerAcceptedJobs?phone=${workerData.phone}`)
+      const res = await fetch(`/api/getWorkerAcceptedJobs?phone=${workerData.phone}`, { cache: 'no-store' })
       const data = await res.json()
       if (data.success) {
         // Detect status or rating changes
@@ -195,7 +195,7 @@ export function WorkLinkEmployeeDashboard() {
     if (!workerData.phone) return
     setLoadingRequests(true)
     try {
-      const res = await fetch(`/api/workforce/request?phone=${workerData.phone}`)
+      const res = await fetch(`/api/workforce/request?phone=${workerData.phone}`, { cache: 'no-store' })
       const data = await res.json()
       if (data.success) {
         setRecruitmentRequests(data.data)
@@ -210,7 +210,7 @@ export function WorkLinkEmployeeDashboard() {
   const fetchDeclinedOrders = async () => {
     if (!workerData.phone) return
     try {
-      const res = await fetch(`/api/workforce/request?phone=${workerData.phone}&type=declined`)
+      const res = await fetch(`/api/workforce/request?phone=${workerData.phone}&type=declined`, { cache: 'no-store' })
       const data = await res.json()
       if (data.success && data.data.length > 0) {
         setDeclinedOrders(data.data)
@@ -302,7 +302,7 @@ export function WorkLinkEmployeeDashboard() {
         setLoadingWorkforce(true)
         setSelectedRecruitPhone(null)
         try {
-          const res = await fetch(`/api/workforce/available?phone=${workerData.phone}&type=${recruitType}&city=${dbCity}`)
+          const res = await fetch(`/api/workforce/available?phone=${workerData.phone}&type=${recruitType}&city=${dbCity}`, { cache: 'no-store' })
           const data = await res.json()
           if (data.success) {
             setAvailableWorkforce(data.data)
@@ -324,7 +324,7 @@ export function WorkLinkEmployeeDashboard() {
         setReLoadingWorkforce(true)
         setReSelectedPhone(null)
         try {
-          const res = await fetch(`/api/workforce/available?phone=${workerData.phone}&type=${reRecruitType}&city=${dbCity}`)
+          const res = await fetch(`/api/workforce/available?phone=${workerData.phone}&type=${reRecruitType}&city=${dbCity}`, { cache: 'no-store' })
           const data = await res.json()
           if (data.success) {
             setReAvailableWorkforce(data.data)

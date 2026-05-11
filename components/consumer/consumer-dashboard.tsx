@@ -125,11 +125,20 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               Active Orders
             </h3>
-            <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 text-[10px] font-bold">
-              {ongoingWork.length} ACTIVE
-            </Badge>
-          </div>
-          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 text-[10px] font-bold text-purple-600 hover:text-purple-700 p-0"
+                onClick={() => window.location.reload()}
+              >
+                Refresh
+              </Button>
+              <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 text-[10px] font-bold">
+                {ongoingWork.length} ACTIVE
+              </Badge>
+            </div>
+          </div>          <div className="space-y-3">
             {ongoingWork.map((work) => (
               <Card key={work._id} className={`p-4 border-l-4 shadow-sm relative overflow-hidden group ${
                 work.status === 'ongoing' ? 'border-l-indigo-500 bg-indigo-50/10' : 'border-l-green-500 bg-green-50/10'
@@ -354,7 +363,7 @@ function OrdersTab({ onEnlargeImage }: { onEnlargeImage: (url: string) => void }
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch(`/api/consumer/order?phone=${workerData.phone}`);
+      const response = await fetch(`/api/consumer/order?phone=${workerData.phone}`, { cache: 'no-store' });
       const data = await response.json();
       if (data.success) {
         setOrders(data.data);
@@ -500,7 +509,7 @@ function AccountTab({ handleLogout, phone, updateWorkerData }: { handleLogout: (
 
   useEffect(() => {
     if (phone) {
-      fetch(`/api/consumer/auth?phone=${phone}`)
+      fetch(`/api/consumer/auth?phone=${phone}`, { cache: 'no-store' })
         .then(res => res.json())
         .then(data => {
           if (data.success) {
@@ -745,7 +754,7 @@ export function ConsumerDashboard() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch(`/api/consumer/order?phone=${workerData.phone}`);
+      const res = await fetch(`/api/consumer/order?phone=${workerData.phone}`, { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
         // Exclude recruitment_pending from active orders on homepage
