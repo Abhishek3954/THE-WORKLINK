@@ -1,9 +1,57 @@
 'use client'
 
-import { ReactNode, useRef, useState, useEffect } from 'react'
+import { ReactNode, useState, useRef, useEffect } from 'react'
 import { ProgressBar } from './progress-bar'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, Play } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
+
+function AudioIconButton({ src }: { src: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause()
+      } else {
+        audioRef.current.play()
+      }
+    }
+  }
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    
+    const handlePlay = () => setIsPlaying(true);
+    const handlePause = () => setIsPlaying(false);
+    const handleEnded = () => setIsPlaying(false);
+
+    audio.addEventListener('play', handlePlay);
+    audio.addEventListener('pause', handlePause);
+    audio.addEventListener('ended', handleEnded);
+
+    return () => {
+      audio.removeEventListener('play', handlePlay);
+      audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('ended', handleEnded);
+    }
+  }, [src])
+
+  return (
+    <>
+      <button
+        onClick={togglePlay}
+        className={`w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full text-white font-serif italic text-base shadow-sm transition-all ${isPlaying ? 'bg-sky-400 animate-pulse' : 'bg-sky-400 hover:bg-sky-500'}`}
+        title={isPlaying ? "Pause audio" : "Play audio"}
+        type="button"
+      >
+        i
+      </button>
+      <audio ref={audioRef} src={src} preload="metadata" />
+    </>
+  )
+}
 
 interface SurveyLayoutProps {
   children: ReactNode
@@ -32,35 +80,26 @@ export function SurveyLayout({
   canProceed = true,
   showBack = true,
 }: SurveyLayoutProps) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-
-  // Autoplay handler
-  useEffect(() => {
-    // Only attempt autoplay once when component mounts
-    if (videoRef.current) {
-      videoRef.current.play().catch(e => {
-        console.log("Autoplay prevented by browser:", e)
-      })
-    }
-  }, [])
-
-  const handleVideoClick = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = 0;
-      videoRef.current.play();
-    }
-  }
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-card border-b border-border px-4 py-4">
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">W</span>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 relative z-0 pr-28 sm:pr-0">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+                <span className="text-primary-foreground font-bold text-lg">W</span>
+              </div>
+              <span className="font-semibold text-lg text-foreground truncate">WorkLink</span>
             </div>
-            <span className="font-semibold text-lg text-foreground">WorkLink</span>
+            {currentStep === 1 && (
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">General instruction</span>
+                <div className="flex-shrink-0">
+                  <AudioIconButton src="/audios/Opening.mp4" />
+                </div>
+              </div>
+            )}
           </div>
           <ProgressBar
             currentStep={currentStep}
@@ -74,7 +113,14 @@ export function SurveyLayout({
       <main className="flex-1 px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-foreground mb-2 text-balance">{title}</h1>
+            <div className="flex items-start gap-3 mb-2">
+              {currentStep >= 1 && currentStep <= 10 && (
+                <div className="mt-1 flex-shrink-0">
+                  <AudioIconButton key={currentStep} src={`/audios/Step ${currentStep}.mp4`} />
+                </div>
+              )}
+              <h1 className="text-2xl font-bold text-foreground text-balance">{title}</h1>
+            </div>
             {subtitle && (
               <p className="text-muted-foreground">{subtitle}</p>
             )}
@@ -108,30 +154,6 @@ export function SurveyLayout({
           )}
         </div>
       </footer>
-
-      {/* Floating Video Overlay */}
-      <div 
-        onClick={handleVideoClick}
-        className="fixed bottom-24 right-4 w-32 md:w-48 aspect-[9/16] rounded-2xl overflow-hidden shadow-2xl z-50 cursor-pointer border-[3px] border-primary hover:scale-105 transition-transform bg-black group"
-      >
-        <video 
-          ref={videoRef}
-          src="/survey-intro.mp4" 
-          autoPlay
-          playsInline
-          onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
-          onEnded={() => setIsPlaying(false)}
-          className="w-full h-full object-cover"
-        />
-        {!isPlaying && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity">
-            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground shadow-lg">
-              <Play className="w-5 h-5 ml-1" />
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   )
 }
