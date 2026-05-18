@@ -51,14 +51,18 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const phone = searchParams.get('phone');
+    const excludeImages = searchParams.get('excludeImages') === 'true';
 
     if (!phone) {
       return NextResponse.json({ success: false, error: 'Phone number required' }, { status: 400 });
     }
 
     const db = await getDb();
+    const projection = excludeImages ? { image: 0 } : {};
+    
     const orders = await db.collection('orders')
       .find({ consumerPhone: phone })
+      .project(projection)
       .sort({ createdAt: -1 })
       .toArray();
 

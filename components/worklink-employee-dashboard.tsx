@@ -161,10 +161,10 @@ export function WorkLinkEmployeeDashboard() {
   const [lastOrderState, setLastOrderState] = useState<Record<string, { status: string, rating?: number }>>({});
   const [completionPopup, setCompletionPopup] = useState<any>(null);
 
-  const fetchAcceptedJobs = async () => {
+  const fetchAcceptedJobs = async (excludeImages = false) => {
     if (!workerData.phone) return
     try {
-      const res = await fetch(`/api/getWorkerAcceptedJobs?phone=${workerData.phone}`, { cache: 'no-store' })
+      const res = await fetch(`/api/getWorkerAcceptedJobs?phone=${workerData.phone}${excludeImages ? '&excludeImages=true' : ''}`, { cache: 'no-store' })
       const data = await res.json()
       if (data.success) {
         // Detect status or rating changes
@@ -184,7 +184,15 @@ export function WorkLinkEmployeeDashboard() {
           newStateMap[job._id] = { status: job.status, rating: job.rating };
         });
         setLastOrderState(newStateMap);
-        setAcceptedJobs(data.data)
+
+        if (excludeImages) {
+          setAcceptedJobs(prev => data.data.map((newJob: any) => {
+            const existing = prev.find(j => j._id === newJob._id);
+            return existing && existing.image ? { ...newJob, image: existing.image } : newJob;
+          }));
+        } else {
+          setAcceptedJobs(data.data)
+        }
       }
     } catch (err) {
       console.error("Fetch accepted jobs error:", err)
@@ -207,13 +215,21 @@ export function WorkLinkEmployeeDashboard() {
     }
   }
 
-  const fetchDeclinedOrders = async () => {
+  const fetchDeclinedOrders = async (excludeImages = false) => {
     if (!workerData.phone) return
     try {
-      const res = await fetch(`/api/workforce/request?phone=${workerData.phone}&type=declined`, { cache: 'no-store' })
+      const res = await fetch(`/api/workforce/request?phone=${workerData.phone}&type=declined${excludeImages ? '&excludeImages=true' : ''}`, { cache: 'no-store' })
       const data = await res.json()
       if (data.success && data.data.length > 0) {
-        setDeclinedOrders(data.data)
+        if (excludeImages) {
+          setDeclinedOrders(prev => data.data.map((newOrder: any) => {
+            const existing = prev.find(o => o.orderId === newOrder.orderId);
+            return existing && existing.image ? { ...newOrder, image: existing.image } : newOrder;
+          }));
+        } else {
+          setDeclinedOrders(data.data)
+        }
+        
         // Auto-show the first declined order popup
         if (!showDeclineModal) {
           setShowDeclineModal(data.data[0])
@@ -289,8 +305,8 @@ export function WorkLinkEmployeeDashboard() {
       fetchDeclinedOrders();
       fetchEmployeeData();
       const interval = setInterval(() => {
-        fetchAcceptedJobs();
-        fetchDeclinedOrders();
+        fetchAcceptedJobs(true);
+        fetchDeclinedOrders(true);
       }, 5000);
       return () => clearInterval(interval);
     }

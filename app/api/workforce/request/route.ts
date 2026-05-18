@@ -42,12 +42,14 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const phone = searchParams.get('phone');
     const type = searchParams.get('type'); // 'incoming' (default) or 'declined'
+    const excludeImages = searchParams.get('excludeImages') === 'true';
 
     if (!phone) {
       return NextResponse.json({ success: false, error: 'Phone required' }, { status: 400 });
     }
 
     const db = await getDb();
+    const projection = excludeImages ? { image: 0 } : {};
 
     if (type === 'declined') {
       // Fetch orders where this worker is the recruiter and recruitment was declined
@@ -55,11 +57,13 @@ export async function GET(req: Request) {
         recruiterPhone: phone,
         recruitmentStatus: 'declined',
         status: 'recruitment_pending'
-      }).toArray();
+      })
+      .project(projection)
+      .toArray();
 
       const result = declinedOrders.map(order => {
         let imageData = null;
-        if (order.image && order.image.data) {
+        if (!excludeImages && order.image && order.image.data) {
           const buffer = order.image.data.buffer || order.image.data;
           const b64 = Buffer.from(buffer).toString('base64');
           imageData = `data:${order.image.contentType};base64,${b64}`;

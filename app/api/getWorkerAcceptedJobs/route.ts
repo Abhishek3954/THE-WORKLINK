@@ -5,12 +5,15 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const phone = searchParams.get('phone');
+    const excludeImages = searchParams.get('excludeImages') === 'true';
 
     if (!phone) {
       return NextResponse.json({ success: false, error: 'Worker phone required' }, { status: 400 });
     }
 
     const db = await getDb();
+    const projection = excludeImages ? { image: 0 } : {};
+
     const orders = await db.collection('orders').find({ 
       $or: [
         { workerPhone: phone },
@@ -19,7 +22,10 @@ export async function GET(req: Request) {
       ],
       // Include recruitment_pending so workers can see these in their jobs section
       status: { $in: ['accepted', 'ongoing', 'completed', 'recruitment_pending'] } 
-    }).sort({ updatedAt: -1 }).toArray();
+    })
+    .project(projection)
+    .sort({ updatedAt: -1 })
+    .toArray();
 
     const transformedOrders = orders.map((order: any) => {
       if (order.image && order.image.data) {

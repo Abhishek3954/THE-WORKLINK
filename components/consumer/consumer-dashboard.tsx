@@ -752,15 +752,30 @@ export function ConsumerDashboard() {
     sessionStorage.setItem('worklink_consumer_activeTab', tab);
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (excludeImages = false) => {
     try {
-      const res = await fetch(`/api/consumer/order?phone=${workerData.phone}`, { cache: 'no-store' });
+      const res = await fetch(`/api/consumer/order?phone=${workerData.phone}${excludeImages ? '&excludeImages=true' : ''}`, { cache: 'no-store' });
       const data = await res.json();
       if (data.success) {
         // Exclude recruitment_pending from active orders on homepage
         // recruitment_pending orders should appear as 'pending' in orders tab
-        setOngoingWork(data.data.filter((o: any) => (o.status === 'accepted' || o.status === 'ongoing') && o.status !== 'recruitment_pending'));
-        setHistory(data.data.filter((o: any) => o.status === 'completed'));
+        const activeOrders = data.data.filter((o: any) => (o.status === 'accepted' || o.status === 'ongoing') && o.status !== 'recruitment_pending');
+        const completedOrders = data.data.filter((o: any) => o.status === 'completed');
+
+        if (excludeImages) {
+          // Merge and preserve images
+          setOngoingWork(prev => activeOrders.map((newOrder: any) => {
+            const existing = prev.find(o => o._id === newOrder._id);
+            return existing && existing.image ? { ...newOrder, image: existing.image } : newOrder;
+          }));
+          setHistory(prev => completedOrders.map((newOrder: any) => {
+            const existing = prev.find(o => o._id === newOrder._id);
+            return existing && existing.image ? { ...newOrder, image: existing.image } : newOrder;
+          }));
+        } else {
+          setOngoingWork(activeOrders);
+          setHistory(completedOrders);
+        }
       }
     } catch (err) {
       console.error("Error fetching orders:", err);
@@ -769,9 +784,9 @@ export function ConsumerDashboard() {
 
   useEffect(() => {
     if (workerData.phone) fetchOrders();
-    // Poll on home tab to catch recruitment status changes
+    // Poll on home tab to catch recruitment status changes without image data overhead
     if (activeTab === 'home' && workerData.phone) {
-      const interval = setInterval(fetchOrders, 5000);
+      const interval = setInterval(() => fetchOrders(true), 5000);
       return () => clearInterval(interval);
     }
   }, [workerData.phone, activeTab]);

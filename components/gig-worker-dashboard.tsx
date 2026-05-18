@@ -145,10 +145,10 @@ export function GigWorkerDashboard() {
   const [lastPaymentStatus, setLastPaymentStatus] = useState<Record<string, string>>({});
   const [paymentPopup, setPaymentPopup] = useState<{ isOpen: boolean, order: any, type: string } | null>(null);
 
-  const fetchAcceptedJobs = async () => {
+  const fetchAcceptedJobs = async (excludeImages = false) => {
     if (!workerData.phone) return
     try {
-      const res = await fetch(`/api/getWorkerAcceptedJobs?phone=${workerData.phone}`, { cache: 'no-store' })
+      const res = await fetch(`/api/getWorkerAcceptedJobs?phone=${workerData.phone}${excludeImages ? '&excludeImages=true' : ''}`, { cache: 'no-store' })
       const data = await res.json()
       if (data.success) {
         // Detect payment/status/rating changes
@@ -180,7 +180,20 @@ export function GigWorkerDashboard() {
           newStatusMap[job._id] = job.paymentStatus;
         });
         setLastPaymentStatus(newStatusMap);
-        setAcceptedJobs(data.data)
+        
+        if (excludeImages) {
+          setAcceptedJobs(prevJobs => {
+            return data.data.map((newJob: any) => {
+              const existingJob = prevJobs.find(j => j._id === newJob._id);
+              if (existingJob && existingJob.image && !newJob.image) {
+                return { ...newJob, image: existingJob.image };
+              }
+              return newJob;
+            });
+          });
+        } else {
+          setAcceptedJobs(data.data)
+        }
       }
     } catch (err) {
       console.error("Fetch accepted jobs error:", err)
@@ -191,8 +204,8 @@ export function GigWorkerDashboard() {
     if (activeTab === 'jobs') fetchJobs()
     if (activeTab === 'home') {
       fetchAcceptedJobs();
-      // Poll every 5 seconds while on home tab to catch payments
-      const interval = setInterval(fetchAcceptedJobs, 5000);
+      // Poll every 5 seconds while on home tab to catch payments without image data overhead
+      const interval = setInterval(() => fetchAcceptedJobs(true), 5000);
       return () => clearInterval(interval);
     }
   }, [activeTab, workerData.phone]);
