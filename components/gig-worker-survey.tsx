@@ -172,7 +172,7 @@ export function GigWorkerSurvey() {
 
 
   const validateRegForm = () => {
-    const newErrors = { name: '', phone: '', password: '' }
+    const newErrors = { name: '', phone: '', password: '', city: '' }
     let isValid = true
 
     if (!regName.trim()) {
