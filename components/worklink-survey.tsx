@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { WorkLinkEmployeeProfile } from '@/lib/types'
 import { AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { Button } from './ui/button'
+
 
 const TOTAL_STEPS = 9
 
@@ -103,68 +103,6 @@ export function WorkLinkSurvey() {
   const [profile, setProfile] = useState<Partial<WorkLinkEmployeeProfile>>(workerData.workLinkProfile)
   const [hasRejection, setHasRejection] = useState(false)
 
-  // dev only
-  const autoFillWorkLink = (rank: 1 | 2 | 3 | 4 | 5) => {
-    const mockProfile: WorkLinkEmployeeProfile = {
-      intent: rank === 5 ? 'exploring' : 'stable',
-      experienceLevel: rank === 5 ? 'less-1' : '5+',
-      jobVolume: rank === 5 ? 'less-20' : '300+',
-      workTypeHistory: 'complex',
-      specialization: 'skilled',
-      problemHandling: 'independent',
-      toolsOwnership: 'complete',
-      workSetup: 'alone',
-      commitment: 'always',
-      timeliness: 'always',
-      cancellation: 'never',
-      autoAssignment: 'yes',
-      paymentStructure: 'yes',
-      codeOfConduct: 'yes',
-      idBackgroundCheck: 'yes',
-      skillAssessment: 'yes',
-      openToTraining: 'yes',
-      workMode: 'full-time',
-      dailyAvailability: '8+',
-      hasPortfolio: 'yes',
-      hasReference: 'yes',
-    };
-
-    if (rank === 5) {
-      setProfile(mockProfile);
-      setHasRejection(true);
-      return;
-    }
-
-    const scores = [100, 80, 60, 40];
-    const ranks = ['platinum', 'gold', 'silver', 'bronze'] as const;
-    const score = scores[rank - 1];
-    const rankName = ranks[rank - 1];
-
-    updateWorkerData({
-      workLinkProfile: mockProfile,
-      workerType: 'worklink',
-      skillAssessmentScore: score,
-      workerRank: rankName,
-      isEligibleForWorkLink: true
-    });
-
-    // Also update server
-    fetch('/api/worklink/profile', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        phone: workerData.phone, 
-        ...mockProfile,
-        skillAssessmentScore: score,
-        workerRank: rankName,
-        rank: rank, // Numeric rank for dashboard legacy support
-        workerType: 'worklink',
-        isEligibleForWorkLink: true
-      })
-    });
-
-    setCurrentStep('worklink-dashboard');
-  }
 
   const updateProfile = (updates: Partial<WorkLinkEmployeeProfile>) => {
     setProfile(prev => ({ ...prev, ...updates }))
@@ -330,23 +268,7 @@ export function WorkLinkSurvey() {
       case 1:
         return (
           <div className="space-y-3">
-            {/* Development Buttons */}
-            <div className="bg-muted/50 p-4 rounded-lg border border-dashed border-border mb-4">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">DEV: Auto-Fill Rank</p>
-              <div className="grid grid-cols-5 gap-1">
-                {[1, 2, 3, 4, 5].map((r) => (
-                  <Button 
-                    key={r}
-                    variant="outline" 
-                    size="sm" 
-                    className="text-[10px] h-auto py-1 px-0"
-                    onClick={() => autoFillWorkLink(r as any)}
-                  >
-                    {r === 5 ? 'INELIG' : `RANK ${r}`}
-                  </Button>
-                ))}
-              </div>
-            </div>
+
             <RadioGroup
               value={profile.intent ?? ''}
               onValueChange={(value) => updateProfile({ intent: value })}

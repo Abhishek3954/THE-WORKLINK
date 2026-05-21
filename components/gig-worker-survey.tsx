@@ -168,44 +168,8 @@ export function GigWorkerSurvey() {
   const [regCity, setRegCity] = useState('')
   const [regErrors, setRegErrors] = useState({ name: '', phone: '', password: '', city: '' })
 
-  // dev only
-  const autoFillWorker = (eligible: boolean) => {
-    const random = Math.floor(1000 + Math.random() * 9000);
-    const finalName = regName.trim() || `Test ${eligible ? 'Eligible' : 'Gig'} ${random}`;
-    const finalPhone = regPhone.trim() || `987654${random}`;
-    const finalPassword = regPassword.trim() || 'password123';
-    const finalCity = regCity.trim() || 'Ludhiana';
-    
-    updateWorkerData({ name: finalName, phone: finalPhone, password: finalPassword, city: finalCity });
-    
-    const mockProfile: any = {
-      primarySkill: 'electrical',
-      secondarySkills: ['Electrical Wiring', 'Switch / Board Repair'],
-      yearsOfExperience: eligible ? '5 – 10 years' : 'Less than 6 months',
-      workBackground: 'Self-employed',
-      jobsCompleted: eligible ? '200+' : '0 – 10',
-      toolsAvailability: eligible ? 'Complete professional tools' : 'No tools',
-      materialHandling: 'I can arrange materials',
-      workType: 'Full-time',
-      availability: 'Flexible',
-      jobPreference: ['Regular work'],
-      travelRange: 'Within 10 km',
-      travelWillingness: 'Within city',
-      hasVehicle: 'Yes',
-      languages: ['English', 'Hindi'],
-      paymentPreference: 'Per job',
-      expectedDailyIncome: '₹1200+',
-      idProofType: 'Aadhaar Card',
-      hasWorkPhotos: 'no',
-      hasCertification: 'no',
-      jobCommitment: eligible ? 'Always' : 'Depends on situation',
-      cancellationBehavior: eligible ? 'Never' : 'Sometimes',
-    };
 
-    setProfile(mockProfile);
-    setIsRegistration(false);
-    setStep(10); // Jump to last step or just submit
-  }
+
 
   const validateRegForm = () => {
     const newErrors = { name: '', phone: '', password: '' }
@@ -906,27 +870,7 @@ export function GigWorkerSurvey() {
                       </Button>
                     </div>
 
-                    {/* Development Buttons */}
-                    <div className="grid grid-cols-2 gap-2 border-t pt-4">
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-[10px] bg-red-50 hover:bg-red-100 border-red-200 h-auto py-2"
-                        onClick={() => autoFillWorker(false)}
-                      >
-                        DEV: Auto Gig (Ineligible)
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-[10px] bg-green-50 hover:bg-green-100 border-green-200 h-auto py-2"
-                        onClick={() => autoFillWorker(true)}
-                      >
-                        DEV: Auto Gig (Eligible)
-                      </Button>
-                    </div>
+
                   </div>
                 </form>
               </CardContent>
