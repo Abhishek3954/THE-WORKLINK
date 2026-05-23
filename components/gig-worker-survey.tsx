@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { GigWorkerProfile } from '@/lib/types'
 import { 
   Zap, Wrench, TreePine, Sparkles, Paintbrush, 
-  Plug, Hammer, MoreHorizontal, Upload, Camera, ArrowRight
+  Plug, Hammer, MoreHorizontal, Upload, Camera, ArrowRight, Home
 } from 'lucide-react'
 import { Button } from './ui/button'
 
@@ -778,12 +778,26 @@ export function GigWorkerSurvey() {
   if (isRegistration) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <header className="px-4 py-6 border-b border-border bg-card">
-          <div className="max-w-md mx-auto flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">W</span>
+        <header className="px-4 py-6 border-b border-border bg-card sticky top-0 z-50">
+          <div className="max-w-md mx-auto flex items-center justify-between">
+            <div 
+              className="flex items-center gap-3 cursor-pointer select-none hover:opacity-90 transition-opacity"
+              onClick={() => setCurrentStep('selection')}
+            >
+              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">W</span>
+              </div>
+              <span className="font-semibold text-xl text-foreground">WorkLink</span>
             </div>
-            <span className="font-semibold text-xl text-foreground">WorkLink</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex items-center gap-2 hover:bg-muted"
+              onClick={() => setCurrentStep('selection')}
+            >
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">Back to Home</span>
+            </Button>
           </div>
         </header>
         <main className="flex-1 px-4 py-8">

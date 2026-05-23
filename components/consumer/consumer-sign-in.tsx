@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowRight, Eye, EyeOff, Lock, Phone } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, Lock, Phone, Home } from 'lucide-react'
 
 export function ConsumerSignIn() {
   const { setCurrentStep, updateWorkerData } = useWorkflow()
@@ -82,12 +82,26 @@ export function ConsumerSignIn() {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="px-4 py-6 border-b border-border bg-card">
-        <div className="max-w-md mx-auto flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
-            <span className="text-white font-bold text-lg">C</span>
+      <header className="px-4 py-6 border-b border-border bg-card sticky top-0 z-50">
+        <div className="max-w-md mx-auto flex items-center justify-between">
+          <div 
+            className="flex items-center gap-3 cursor-pointer select-none hover:opacity-90 transition-opacity"
+            onClick={() => setCurrentStep('selection')}
+          >
+            <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">C</span>
+            </div>
+            <span className="font-semibold text-xl text-foreground">WorkLink Consumer</span>
           </div>
-          <span className="font-semibold text-xl text-foreground">WorkLink Consumer</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex items-center gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+            onClick={() => setCurrentStep('selection')}
+          >
+            <Home className="w-4 h-4" />
+            <span className="hidden sm:inline">Back to Home</span>
+          </Button>
         </div>
       </header>
 
