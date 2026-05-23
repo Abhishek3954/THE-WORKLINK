@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
 import { GigWorkerProfile } from '@/components/gig-worker-profile'
+import { useLanguage } from '@/lib/i18n-context'
 
 const PRIMARY_SKILLS_MAP: Record<string, string> = {
   'other': 'Worker',
@@ -48,6 +49,7 @@ const MOCK_JOBS = [
 
 export function GigWorkerDashboard() {
   const { workerData, setCurrentStep, updateWorkerData } = useWorkflow()
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState<'home' | 'jobs' | 'earnings' | 'profile'>(() => {
     if (typeof window !== 'undefined') {
       return (sessionStorage.getItem('worklink_activeTab') as any) || 'home'
@@ -321,8 +323,8 @@ export function GigWorkerDashboard() {
               )}
             </div>
             <div>
-              <p className="font-semibold text-foreground text-sm">Hi, {dbName.split(' ')[0]}</p>
-              <p className="text-xs text-muted-foreground">{primarySkill}</p>
+              <p className="font-semibold text-foreground text-sm">{t('Hi')}, {dbName.split(' ')[0]}</p>
+              <p className="text-xs text-muted-foreground">{t(primarySkill)}</p>
             </div>
           </div>
         </div>
@@ -333,7 +335,7 @@ export function GigWorkerDashboard() {
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top fade-in duration-300">
           <Badge className="bg-indigo-600 text-white px-4 py-2 rounded-full font-black text-sm shadow-xl flex items-center gap-2 border-2 border-indigo-300">
             <Loader2 className="w-4 h-4 animate-spin" />
-            Demo Running: {demoOrderState.timer}s
+            {t('Demo Running')}: {demoOrderState.timer}s
           </Badge>
         </div>
       )}
@@ -355,11 +357,11 @@ export function GigWorkerDashboard() {
                   <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-success animate-pulse' : 'bg-muted-foreground'}`} />
                     <span className="text-sm font-medium text-foreground">
-                      {isOnline ? 'You are Online' : 'You are Offline'}
+                      {isOnline ? t('You are Online') : t('You are Offline')}
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {isOnline ? 'Ready to receive job requests' : 'Go online to see customer jobs'}
+                    {isOnline ? t('Ready to receive job requests') : t('Go online to see customer jobs')}
                   </p>
                 </div>
                 <Button 
@@ -368,7 +370,7 @@ export function GigWorkerDashboard() {
                   className="text-xs"
                   onClick={toggleOnline}
                 >
-                  {isOnline ? 'Go Offline' : 'Go Online'}
+                  {isOnline ? t('Go Offline') : t('Go Online')}
                 </Button>
               </div>
             </CardContent>
@@ -379,19 +381,19 @@ export function GigWorkerDashboard() {
             <Card className="text-center">
               <CardContent className="py-4 px-2">
                 <p className="text-2xl font-bold text-foreground">0</p>
-                <p className="text-xs text-muted-foreground mt-1">Jobs Done</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('Jobs Done')}</p>
               </CardContent>
             </Card>
             <Card className="text-center">
               <CardContent className="py-4 px-2">
                 <p className="text-2xl font-bold text-foreground">₹0</p>
-                <p className="text-xs text-muted-foreground mt-1">Earned</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('Earned')}</p>
               </CardContent>
             </Card>
             <Card className="text-center">
               <CardContent className="py-4 px-2">
                 <p className="text-2xl font-bold text-foreground">-</p>
-                <p className="text-xs text-muted-foreground mt-1">Rating</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('Rating')}</p>
               </CardContent>
             </Card>
           </div>
@@ -400,7 +402,7 @@ export function GigWorkerDashboard() {
           {acceptedJobs.filter(j => j.status !== 'completed').length > 0 && (
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between px-1">
-                <h2 className="font-bold text-foreground">Active Assignments</h2>
+                <h2 className="font-bold text-foreground">{t('Active Assignments')}</h2>
                 <span className="text-xs font-black text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">{acceptedJobs.filter(j => j.status !== 'completed').length}</span>
               </div>
               <div className="space-y-3">
@@ -466,7 +468,7 @@ export function GigWorkerDashboard() {
                           }
                         }}
                       >
-                        {job.status === 'ongoing' ? (job.isDemo ? 'START SERVICE' : 'RESUME SERVICE') : (job.isDemo ? 'REACHED PLACE' : 'START SERVICE')}
+                        {job.status === 'ongoing' ? (job.isDemo ? t('START SERVICE') : t('RESUME SERVICE')) : (job.isDemo ? t('REACHED PLACE') : t('START SERVICE'))}
                       </Button>
                     </CardContent>
                   </Card>
@@ -474,6 +476,32 @@ export function GigWorkerDashboard() {
               </div>
             </div>
           )}
+
+          {/* Upgrade Banner */}
+          <Card className="border-2 border-primary overflow-hidden mb-6">
+            <div className="bg-primary px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-primary-foreground" />
+                  <span className="font-semibold text-primary-foreground">Upgrade to WorkLink</span>
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-primary-foreground" />
+              </div>
+            </div>
+            <CardContent className="py-3">
+              <p className="text-sm text-muted-foreground mb-3">
+                Get priority jobs, higher pay, and insurance benefits
+              </p>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-success" /> More Jobs</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-success" /> Better Pay</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-success" /> Insurance</span>
+              </div>
+              <Button className="w-full mt-3" size="sm" onClick={() => setCurrentStep('worklink-eligibility')}>
+                Check Eligibility
+              </Button>
+            </CardContent>
+          </Card>
 
           {/* Job History */}
           {acceptedJobs.filter(j => j.status === 'completed').length > 0 && (
@@ -536,44 +564,19 @@ export function GigWorkerDashboard() {
             </div>
           )}
 
-          {/* Upgrade Banner */}
-          <Card className="border-2 border-primary overflow-hidden">
-            <div className="bg-primary px-4 py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-primary-foreground" />
-                  <span className="font-semibold text-primary-foreground">Upgrade to WorkLink</span>
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-primary-foreground" />
-              </div>
-            </div>
-            <CardContent className="py-3">
-              <p className="text-sm text-muted-foreground mb-3">
-                Get priority jobs, higher pay, and insurance benefits
-              </p>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-success" /> More Jobs</span>
-                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-success" /> Better Pay</span>
-                <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3 text-success" /> Insurance</span>
-              </div>
-              <Button className="w-full mt-3" size="sm" onClick={() => setCurrentStep('worklink-eligibility')}>
-                Check Eligibility
-              </Button>
-            </CardContent>
-          </Card>
 
           {/* Available Jobs */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-foreground">Jobs Near You</h2>
+              <h2 className="font-semibold text-foreground">{t('Jobs Near You')}</h2>
               <Button variant="ghost" size="sm" className="text-xs text-primary" onClick={fetchJobs}>
-                Refresh
+                {t('Refresh')}
               </Button>
             </div>
             <div className="space-y-3">
               {jobs.length === 0 ? (
                 <p className="text-center py-6 text-xs text-muted-foreground italic bg-muted rounded-xl">
-                  {isOnline ? 'No matching jobs at the moment' : 'Go online to see available jobs'}
+                  {isOnline ? t('No matching jobs at the moment') : t('Go online to see available jobs')}
                 </p>
               ) : (
                 jobs.slice(0, 3).map((job) => (
@@ -621,14 +624,14 @@ export function GigWorkerDashboard() {
             </div>
             {jobs.length > 3 && (
               <Button variant="ghost" className="w-full mt-2 text-xs text-primary" onClick={() => setActiveTab('jobs')}>
-                View all {jobs.length} jobs <ChevronRight className="w-3 h-3 ml-1" />
+                {t('View all')} {jobs.length} {t('jobs')} <ChevronRight className="w-3 h-3 ml-1" />
               </Button>
             )}
           </div>
 
           {/* How It Works */}
           <div>
-            <h2 className="font-semibold text-foreground mb-3">How to Get Started</h2>
+            <h2 className="font-semibold text-foreground mb-3">{t('How to Get Started')}</h2>
             <Card>
               <CardContent className="py-4">
                 <div className="space-y-4">
@@ -714,31 +717,31 @@ export function GigWorkerDashboard() {
           {activeTab === 'jobs' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-foreground">Matched Jobs</h2>
-                <Button variant="ghost" size="sm" className="text-xs" onClick={fetchJobs}>Refresh</Button>
+                <h2 className="text-xl font-bold text-foreground">{t('Matched Jobs')}</h2>
+                <Button variant="ghost" size="sm" className="text-xs" onClick={fetchJobs}>{t('Refresh')}</Button>
               </div>
 
               {/* DEMO JOB CARD */}
               <Card className="relative overflow-hidden group border-indigo-400/50 hover:border-indigo-500 transition-all shadow-md bg-indigo-50/10">
                 <div className="bg-indigo-600/10 p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge className="bg-indigo-600 text-white border-0 text-[9px] font-bold uppercase tracking-wider">Demo Run</Badge>
+                    <Badge className="bg-indigo-600 text-white border-0 text-[9px] font-bold uppercase tracking-wider">{t('Demo Run')}</Badge>
                     <span className="text-sm font-black text-indigo-600 ml-auto">₹500</span>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900">Experience How It Works</h3>
+                  <h3 className="text-lg font-bold text-gray-900">{t('Experience How It Works')}</h3>
                   <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Virtual</span>
+                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {t('Virtual')}</span>
                   </div>
                 </div>
                 <CardContent className="p-4 pt-3">
                   <p className="text-xs text-gray-500 leading-relaxed mb-4">
-                    Click here to automatically accept a demo job, simulate a customer, and see how you get paid in real-time.
+                    {t('Click here to automatically accept a demo job, simulate a customer, and see how you get paid in real-time.')}
                   </p>
                   <Button 
                     className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold h-11 shadow-lg shadow-indigo-600/20 text-white"
                     onClick={handleStartDemo}
                   >
-                    Start Demo Run
+                    {t('Start Demo Run')}
                   </Button>
                 </CardContent>
               </Card>
@@ -758,9 +761,9 @@ export function GigWorkerDashboard() {
                       <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
                         <Zap className="w-8 h-8 text-muted-foreground/30" />
                       </div>
-                      <p className="text-sm font-semibold text-foreground">No matching jobs found</p>
+                      <p className="text-sm font-semibold text-foreground">{t('No matching jobs found')}</p>
                       <p className="text-xs text-muted-foreground max-w-[200px] mt-1 italic">
-                        Jobs appear here when customers need your skills.
+                        {t('Jobs appear here when customers need your skills.')}
                       </p>
                     </div>
                   ) : (
@@ -822,10 +825,10 @@ export function GigWorkerDashboard() {
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-2 z-20">
         <div className="max-w-md mx-auto flex items-center justify-around">
           {[
-            { id: 'home', icon: Briefcase, label: 'Home' },
-            { id: 'jobs', icon: Search, label: 'Jobs' },
-            { id: 'earnings', icon: Wallet, label: 'Earnings' },
-            { id: 'profile', icon: User, label: 'Profile' },
+            { id: 'home', icon: Briefcase, label: t('Home') },
+            { id: 'jobs', icon: Search, label: t('Jobs') },
+            { id: 'earnings', icon: Wallet, label: t('Earnings') },
+            { id: 'profile', icon: User, label: t('Profile') },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -914,6 +917,7 @@ export function GigWorkerDashboard() {
 }
 
 function PaymentReceivedPopup({ isOpen, onClose, order, type }: { isOpen: boolean, onClose: () => void, order: any, type: string }) {
+  const { t } = useLanguage();
   if (!order) return null;
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -952,6 +956,7 @@ function AcceptJobModal({
   isAccepting, 
   error 
 }: any) {
+  const { t } = useLanguage();
   if (!job) return null;
 
   const maxDate = job.isUrgent && job.urgentHours
@@ -1039,6 +1044,7 @@ function AcceptJobModal({
 // ━━━━━━━━━━━━━━━━━━ CONSUMER DETAILS MODAL ━━━━━━━━━━━━━━━━━━
 
 function ConsumerDetailsModal({ phone, onClose }: { phone: string | null, onClose: () => void }) {
+  const { t } = useLanguage();
   const [consumer, setConsumer] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 

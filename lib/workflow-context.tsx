@@ -70,6 +70,9 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       // Clear specific session keys rather than full storage to avoid wiping other non-auth state if necessary,
       // but sessionClear is fine here if we only want to stay on these screens.
       sessionStorage.clear()
+      if (workerData.phone || workerData.name) {
+        setWorkerData(initialWorkerData)
+      }
     }
   }, [currentStep, workerData, isHydrated])
 

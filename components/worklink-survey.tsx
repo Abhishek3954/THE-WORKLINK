@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useWorkflow } from '@/lib/workflow-context'
+import { useLanguage } from '@/lib/i18n-context'
 import { SurveyLayout } from './survey-layout'
 import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
@@ -99,6 +100,7 @@ const DAILY_AVAILABILITY_OPTIONS = [
 
 export function WorkLinkSurvey() {
   const { workerData, updateWorkerData, setCurrentStep } = useWorkflow()
+  const { t } = useLanguage()
   const [step, setStep] = useState(1)
   const [profile, setProfile] = useState<Partial<WorkLinkEmployeeProfile>>(workerData.workLinkProfile)
   const [hasRejection, setHasRejection] = useState(false)
@@ -256,7 +258,7 @@ export function WorkLinkSurvey() {
       )}
     >
       <RadioGroupItem value={option.value} />
-      <span className="text-sm font-medium flex-1">{option.label}</span>
+      <span className="text-sm font-medium flex-1">{t(option.label)}</span>
       {option.warning && (
         <AlertCircle className="w-4 h-4 text-warning" />
       )}
@@ -283,7 +285,7 @@ export function WorkLinkSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>How much experience do you have in your main skill?</Label>
+              <Label>{t('How much experience do you have in your main skill?')}</Label>
               <RadioGroup
                 value={profile.experienceLevel ?? ''}
                 onValueChange={(value) => updateProfile({ experienceLevel: value })}
@@ -294,7 +296,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>How many jobs have you completed?</Label>
+              <Label>{t('How many jobs have you completed?')}</Label>
               <RadioGroup
                 value={profile.jobVolume ?? ''}
                 onValueChange={(value) => updateProfile({ jobVolume: value })}
@@ -305,7 +307,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>What type of work have you mostly done?</Label>
+              <Label>{t('What type of work have you mostly done?')}</Label>
               <RadioGroup
                 value={profile.workTypeHistory ?? ''}
                 onValueChange={(value) => updateProfile({ workTypeHistory: value })}
@@ -321,7 +323,7 @@ export function WorkLinkSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>What is your specialization?</Label>
+              <Label>{t('What is your specialization?')}</Label>
               <RadioGroup
                 value={profile.specialization ?? ''}
                 onValueChange={(value) => updateProfile({ specialization: value })}
@@ -332,7 +334,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>Can you handle complex or unexpected problems on-site?</Label>
+              <Label>{t('Can you handle complex or unexpected problems on-site?')}</Label>
               <RadioGroup
                 value={profile.problemHandling ?? ''}
                 onValueChange={(value) => updateProfile({ problemHandling: value })}
@@ -348,7 +350,7 @@ export function WorkLinkSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>What tools do you have?</Label>
+              <Label>{t('What tools do you have?')}</Label>
               <RadioGroup
                 value={profile.toolsOwnership ?? ''}
                 onValueChange={(value) => updateProfile({ toolsOwnership: value })}
@@ -359,7 +361,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>Do you work alone or with a team?</Label>
+              <Label>{t('Do you work alone or with a team?')}</Label>
               <RadioGroup
                 value={profile.workSetup ?? ''}
                 onValueChange={(value) => updateProfile({ workSetup: value })}
@@ -375,7 +377,7 @@ export function WorkLinkSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>If assigned a job, will you always accept and complete it?</Label>
+              <Label>{t('If assigned a job, will you always accept and complete it?')}</Label>
               <RadioGroup
                 value={profile.commitment ?? ''}
                 onValueChange={(value) => updateProfile({ commitment: value })}
@@ -386,7 +388,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>How often do you reach job location on time?</Label>
+              <Label>{t('How often do you reach job location on time?')}</Label>
               <RadioGroup
                 value={profile.timeliness ?? ''}
                 onValueChange={(value) => updateProfile({ timeliness: value })}
@@ -397,7 +399,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>How often do you cancel jobs?</Label>
+              <Label>{t('How often do you cancel jobs?')}</Label>
               <RadioGroup
                 value={profile.cancellation ?? ''}
                 onValueChange={(value) => updateProfile({ cancellation: value })}
@@ -413,7 +415,7 @@ export function WorkLinkSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>Are you willing to accept auto-assigned jobs from WorkLink?</Label>
+              <Label>{t('Are you willing to accept auto-assigned jobs from WorkLink?')}</Label>
               <RadioGroup
                 value={profile.autoAssignment ?? ''}
                 onValueChange={(value) => updateProfile({ autoAssignment: value })}
@@ -424,7 +426,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>Are you okay with platform commission on each job?</Label>
+              <Label>{t('Are you okay with platform commission on each job?')}</Label>
               <RadioGroup
                 value={profile.paymentStructure ?? ''}
                 onValueChange={(value) => updateProfile({ paymentStructure: value })}
@@ -435,7 +437,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>Will you follow WorkLink service standards and behavior rules?</Label>
+              <Label>{t('Will you follow WorkLink service standards and behavior rules?')}</Label>
               <RadioGroup
                 value={profile.codeOfConduct ?? ''}
                 onValueChange={(value) => updateProfile({ codeOfConduct: value })}
@@ -451,7 +453,7 @@ export function WorkLinkSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>Are you ready for full verification (ID & background check)?</Label>
+              <Label>{t('Are you ready for full verification (ID & background check)?')}</Label>
               <RadioGroup
                 value={profile.idBackgroundCheck ?? ''}
                 onValueChange={(value) => updateProfile({ idBackgroundCheck: value })}
@@ -462,7 +464,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>Are you ready for offline skill testing?</Label>
+              <Label>{t('Are you ready for offline skill testing?')}</Label>
               <RadioGroup
                 value={profile.skillAssessment ?? ''}
                 onValueChange={(value) => updateProfile({ skillAssessment: value })}
@@ -473,7 +475,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>Are you open to training before activation (if required)?</Label>
+              <Label>{t('Are you open to training before activation (if required)?')}</Label>
               <RadioGroup
                 value={profile.openToTraining ?? ''}
                 onValueChange={(value) => updateProfile({ openToTraining: value })}
@@ -489,7 +491,7 @@ export function WorkLinkSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>How will you work with WorkLink?</Label>
+              <Label>{t('How will you work with WorkLink?')}</Label>
               <RadioGroup
                 value={profile.workMode ?? ''}
                 onValueChange={(value) => updateProfile({ workMode: value })}
@@ -500,7 +502,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>How many hours can you work daily?</Label>
+              <Label>{t('How many hours can you work daily?')}</Label>
               <RadioGroup
                 value={profile.dailyAvailability ?? ''}
                 onValueChange={(value) => updateProfile({ dailyAvailability: value })}
@@ -516,7 +518,7 @@ export function WorkLinkSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>Upload photos of your past work (required)</Label>
+              <Label>{t('Upload photos of your past work (required)')}</Label>
               <RadioGroup
                 value={profile.hasPortfolio ?? ''}
                 onValueChange={(value) => updateProfile({ hasPortfolio: value })}
@@ -524,7 +526,7 @@ export function WorkLinkSurvey() {
               >
                 <label className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors">
                   <RadioGroupItem value="yes" />
-                  <span className="text-sm font-medium">Yes, I will upload</span>
+                  <span className="text-sm font-medium">{t('Yes, I will upload')}</span>
                 </label>
               </RadioGroup>
               {profile.hasPortfolio === 'yes' && (
@@ -535,7 +537,7 @@ export function WorkLinkSurvey() {
             </div>
 
             <div className="space-y-3">
-              <Label>Can you provide a previous client reference?</Label>
+              <Label>{t('Can you provide a previous client reference?')}</Label>
               <RadioGroup
                 value={profile.hasReference ?? ''}
                 onValueChange={(value) => updateProfile({ hasReference: value })}
@@ -587,14 +589,14 @@ export function WorkLinkSurvey() {
 
   return (
     <SurveyLayout
-      title={getStepTitle()}
-      subtitle={getStepSubtitle()}
+      title={t(getStepTitle())}
+      subtitle={t(getStepSubtitle())}
       currentStep={step}
       totalSteps={TOTAL_STEPS}
       onNext={handleNext}
       onBack={handleBack}
       canProceed={canProceed()}
-      nextLabel={step === TOTAL_STEPS ? 'Submit Application' : 'Continue'}
+      nextLabel={step === TOTAL_STEPS ? t('Submit Application') : t('Continue')}
       hideAudio={true}
     >
       {renderStep()}

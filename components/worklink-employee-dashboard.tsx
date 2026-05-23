@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useLanguage } from '@/lib/i18n-context'
 
 const PRIMARY_SKILLS_MAP: Record<string, string> = {
   'other': 'Worker',
@@ -40,6 +41,7 @@ function renderImage(imageObj: any) {
 
 export function WorkLinkEmployeeDashboard() {
   const { workerData, setCurrentStep, updateWorkerData } = useWorkflow()
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState<'home' | 'jobs' | 'earnings' | 'profile' | 'workforce'>(() => {
     if (typeof window !== 'undefined') {
       return (sessionStorage.getItem('worklink_employee_activeTab') as any) || 'home'
@@ -503,13 +505,13 @@ export function WorkLinkEmployeeDashboard() {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <p className="font-semibold text-foreground text-sm">Hi, {dbName.split(' ')[0]}</p>
+                <p className="font-semibold text-foreground text-sm">{t('Hi')}, {dbName.split(' ')[0]}</p>
                 <div className="px-1.5 py-0.5 rounded-full bg-violet-600 text-white text-[8px] font-black uppercase flex items-center gap-0.5">
-                   Rank {dbRank}
+                   {t('Rank')} {dbRank}
                 </div>
               </div>
               <div className="flex items-center gap-2 mt-0.5">
-                <p className="text-xs text-muted-foreground">{dbPrimarySkill}</p>
+                <p className="text-xs text-muted-foreground">{t(dbPrimarySkill)}</p>
                 {dbRank < 4 && (
                   <div className="flex items-center gap-1">
                     <div className="w-16 h-1.5 bg-violet-100 rounded-full overflow-hidden">
@@ -530,9 +532,9 @@ export function WorkLinkEmployeeDashboard() {
       {/* Demo Overlay */}
       {demoOrderState.active && demoOrderState.timer > 0 && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top fade-in duration-300">
-          <Badge className="bg-indigo-600 text-white px-4 py-2 rounded-full font-black text-sm shadow-xl flex items-center gap-2 border-2 border-indigo-300">
+          <Badge className="bg-violet-600 text-white px-4 py-2 rounded-full font-black text-sm shadow-xl flex items-center gap-2 border-2 border-violet-300">
             <Loader2 className="w-4 h-4 animate-spin" />
-            Demo Running: {demoOrderState.timer}s
+            {t('Demo Running')}: {demoOrderState.timer}s
           </Badge>
         </div>
       )}
@@ -577,13 +579,13 @@ export function WorkLinkEmployeeDashboard() {
                 <Card className="text-center shadow-sm">
                   <CardContent className="py-5 px-2">
                     <p className="text-2xl font-black text-foreground">{acceptedJobs.filter(j => j.status === 'completed').length}</p>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Jobs Done</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">{t('Jobs Done')}</p>
                   </CardContent>
                 </Card>
                 <Card className="text-center shadow-sm">
                   <CardContent className="py-5 px-2">
                     <p className="text-2xl font-black text-foreground">₹{dbEarnings?.balance || 0}</p>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Earnings</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">{t('Earnings')}</p>
                   </CardContent>
                 </Card>
 
@@ -769,8 +771,8 @@ export function WorkLinkEmployeeDashboard() {
                     <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-sm border border-border">
                         <Search className="w-6 h-6 text-muted-foreground" />
                     </div>
-                    <p className="text-sm font-bold text-slate-900 mb-1 leading-none uppercase tracking-tight">Looking for matches...</p>
-                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">Priority assignments will appear here</p>
+                    <p className="text-sm font-bold text-slate-900 mb-1 leading-none uppercase tracking-tight">{t('Looking for matches...')}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">{t('Priority assignments will appear here')}</p>
                  </div>
               )}
             </>
@@ -779,7 +781,7 @@ export function WorkLinkEmployeeDashboard() {
           {activeTab === 'jobs' && (
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-black text-foreground tracking-tight">Priority Matches</h2>
+                    <h2 className="text-xl font-black text-foreground tracking-tight">{t('Priority Matches')}</h2>
                     <Button variant="ghost" size="sm" className="font-bold text-violet-600 text-xs" onClick={fetchJobs}>
                         Refresh
                     </Button>
@@ -789,23 +791,23 @@ export function WorkLinkEmployeeDashboard() {
                 <Card className="relative overflow-hidden group border-indigo-400/50 hover:border-indigo-500 transition-all shadow-md bg-indigo-50/10">
                   <div className="bg-indigo-600/10 p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-indigo-600 text-white border-0 text-[9px] font-bold uppercase tracking-wider">Demo Run</Badge>
+                      <Badge className="bg-indigo-600 text-white border-0 text-[9px] font-bold uppercase tracking-wider">{t('Demo Run')}</Badge>
                       <span className="text-sm font-black text-indigo-600 ml-auto">₹500</span>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">Experience How It Works</h3>
+                    <h3 className="text-lg font-bold text-gray-900">{t('Experience How It Works')}</h3>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Virtual</span>
+                      <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {t('Virtual')}</span>
                     </div>
                   </div>
                   <CardContent className="p-4 pt-3">
                     <p className="text-xs text-gray-500 leading-relaxed mb-4">
-                      Click here to automatically accept a demo job, simulate a customer, and see how you get paid in real-time.
+                      {t('Click here to automatically accept a demo job, simulate a customer, and see how you get paid in real-time.')}
                     </p>
                     <Button 
                       className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold h-11 shadow-lg shadow-indigo-600/20 text-white"
                       onClick={handleStartDemo}
                     >
-                      Start Demo Run
+                      {t('Start Demo Run')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -945,7 +947,7 @@ export function WorkLinkEmployeeDashboard() {
           {activeTab === 'workforce' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black text-foreground tracking-tight">Workforce Development</h2>
+                <h2 className="text-xl font-black text-foreground tracking-tight">{t('Workforce Development')}</h2>
                 <Badge className="bg-violet-600 text-white uppercase text-[8px] font-black">PENDING REQUESTS</Badge>
               </div>
 
@@ -1019,11 +1021,11 @@ export function WorkLinkEmployeeDashboard() {
       <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-4 py-2 z-20">
         <div className="max-w-md mx-auto flex items-center justify-around">
           {[
-            { id: 'home', icon: Briefcase, label: 'Home' },
-            { id: 'jobs', icon: Search, label: 'Jobs' },
-            { id: 'workforce', icon: Users, label: 'Workforce' },
-            { id: 'earnings', icon: Wallet, label: 'Earnings' },
-            { id: 'profile', icon: User, label: 'Profile' },
+            { id: 'home', icon: Briefcase, label: t('Home') },
+            { id: 'jobs', icon: Search, label: t('Jobs') },
+            { id: 'workforce', icon: Users, label: t('Workforce') },
+            { id: 'earnings', icon: Wallet, label: t('Earnings') },
+            { id: 'profile', icon: User, label: t('Profile') },
           ].map((tab) => (
             <button
               key={tab.id}

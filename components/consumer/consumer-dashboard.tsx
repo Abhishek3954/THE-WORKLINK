@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useWorkflow } from '@/lib/workflow-context';
+import { useLanguage } from '@/lib/i18n-context';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -61,6 +62,7 @@ function renderImage(imageObj: any) {
 }
 
 function StatCard({ icon, value, label }: { icon: React.ReactNode, value: string, label: string }) {
+  const { t } = useLanguage();
   return (
     <Card className="flex-1 p-3 text-center border-gray-100 shadow-sm">
       <div className="flex justify-center mb-1 text-purple-600">{icon}</div>
@@ -71,6 +73,7 @@ function StatCard({ icon, value, label }: { icon: React.ReactNode, value: string
 }
 
 function EmptyState({ icon, title, description, action }: any) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
@@ -94,6 +97,7 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
   onUpdateStatus: (order: any, nextStatus: string) => void
 }) {
   const { workerData } = useWorkflow();
+  const { t } = useLanguage();
   const [promotions, setPromotions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -123,7 +127,7 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
           <div className="flex items-center justify-between mb-3 px-1">
             <h3 className="text-base font-black text-gray-900 tracking-tight flex items-center gap-2">
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-              Active Orders
+              {t('Active Orders')}
             </h3>
             <div className="flex items-center gap-2">
               <Button 
@@ -132,10 +136,10 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                 className="h-6 text-[10px] font-bold text-purple-600 hover:text-purple-700 p-0"
                 onClick={() => window.location.reload()}
               >
-                Refresh
+                {t('Refresh')}
               </Button>
               <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100 text-[10px] font-bold">
-                {ongoingWork.length} ACTIVE
+                {ongoingWork.length} {t('ACTIVE')}
               </Badge>
             </div>
           </div>          <div className="space-y-3">
@@ -172,12 +176,12 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                     <div className="flex flex-col gap-1 pt-1">
                       <p className="text-[11px] text-gray-500 flex items-center gap-1.5">
                         <CalendarDays className="w-3 h-3 text-purple-500" />
-                        Time: <span className="font-bold text-gray-700">{new Date(work.scheduledTime).toLocaleString()}</span>
+                        {t('Time')}: <span className="font-bold text-gray-700">{new Date(work.scheduledTime).toLocaleString()}</span>
                       </p>
                       <p className="text-[11px] text-gray-500 flex items-center gap-1.5">
                         <Star className="w-3 h-3 text-amber-400" />
-                        Payment: <span className="font-black text-gray-900">
-                          {work.paymentStatus === 'half' ? '50% PAID' : work.paymentStatus === 'final' ? '100% PAID' : 'PENDING'}
+                        {t('Payment')}: <span className="font-black text-gray-900">
+                          {work.paymentStatus === 'half' ? t('50% PAID') : work.paymentStatus === 'final' ? t('100% PAID') : t('PENDING')}
                         </span>
                       </p>
                     </div>
@@ -189,7 +193,7 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                       className="bg-white border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl text-[10px] font-bold h-7 px-2 shadow-sm"
                       onClick={() => onViewWorker(work.workerPhone)}
                     >
-                      View Profile
+                      {t('View Profile')}
                     </Button>
                     {work.status === 'accepted' ? (
                       <Button 
@@ -197,7 +201,7 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                         className={`bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-black h-8 px-2 shadow-md shadow-green-100 ${work.isDemo ? 'animate-pulse ring-4 ring-green-400/50' : ''}`}
                         onClick={() => onUpdateStatus(work, 'ongoing')}
                       >
-                        {work.isDemo ? 'Pay First 50% (Demo)' : 'Worker Arrived'}
+                        {work.isDemo ? t('Pay First 50% (Demo)') : t('Worker Arrived')}
                       </Button>
                     ) : (
                       <Button 
@@ -205,7 +209,7 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                         className={`bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black h-8 px-2 shadow-md shadow-indigo-100 ${work.isDemo ? 'animate-pulse ring-4 ring-indigo-400/50' : ''}`}
                         onClick={() => onUpdateStatus(work, 'completed')}
                       >
-                        {work.isDemo ? 'Pay Final 50% (Demo)' : 'Work Completed'}
+                        {work.isDemo ? t('Pay Final 50% (Demo)') : t('Work Completed')}
                       </Button>
                     )}
                   </div>
@@ -225,18 +229,18 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
           <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mb-2 group-hover:bg-purple-600 group-hover:scale-110 transition-all">
             <Plus className="w-5 h-5 text-purple-600 group-hover:text-white transition-colors" />
           </div>
-          <p className="text-sm font-semibold text-gray-900">Place New Order</p>
-          <p className="text-xs text-gray-500 mt-0.5">Book a service now</p>
+          <p className="text-sm font-semibold text-gray-900">{t('Place New Order')}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{t('Book a service now')}</p>
         </Card>
         <Card className="p-4 opacity-70 border-gray-100 bg-gray-50/30">
           <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center mb-2">
             <CreditCard className="w-5 h-5 text-gray-400" />
           </div>
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-gray-900">Payments</p>
-            <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">SOON</Badge>
+            <p className="text-sm font-semibold text-gray-900">{t('Payments')}</p>
+            <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">{t('SOON')}</Badge>
           </div>
-          <p className="text-xs text-gray-500 mt-0.5">Manage billing</p>
+          <p className="text-xs text-gray-500 mt-0.5">{t('Manage billing')}</p>
         </Card>
       </div>
 
@@ -254,7 +258,7 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                 <p className="text-xs opacity-80 mb-3">{p.description}</p>
                 <div className="flex items-center justify-between">
                   <span className="bg-white/50 px-2 py-1 rounded text-xs font-mono font-bold tracking-wider">{p.code}</span>
-                  <span className="text-xs font-bold flex items-center gap-1 cursor-pointer hover:underline">Apply <ArrowRight className="w-3 h-3" /></span>
+                  <span className="text-xs font-bold flex items-center gap-1 cursor-pointer hover:underline">{t('Apply')} <ArrowRight className="w-3 h-3" /></span>
                 </div>
               </div>
             ))}
@@ -265,8 +269,8 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
       {/* Services Grid */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-bold text-gray-900">Our Services</h3>
-          <span className="text-xs text-purple-600 font-semibold cursor-pointer">View All</span>
+          <h3 className="text-base font-bold text-gray-900">{t('Our Services')}</h3>
+          <span className="text-xs text-purple-600 font-semibold cursor-pointer">{t('View All')}</span>
         </div>
         <div className="grid grid-cols-3 gap-3">
           {SERVICES.map((s) => {
@@ -279,8 +283,8 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                 <div className="w-12 h-12 bg-gray-50 group-hover:bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-2 transition-colors">
                   <Icon className="w-5 h-5 text-gray-600 group-hover:text-purple-600 transition-colors" />
                 </div>
-                <p className="text-[11px] font-semibold text-gray-900 leading-tight">{s.label}</p>
-                <p className="text-[9px] text-gray-500 mt-0.5">start ₹{s.startingPrice}</p>
+                <p className="text-[11px] font-semibold text-gray-900 leading-tight">{t(s.label)}</p>
+                <p className="text-[9px] text-gray-500 mt-0.5">{t('start')} ₹{s.startingPrice}</p>
               </Card>
             );
           })}
@@ -293,9 +297,9 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
           <div className="flex items-center justify-between mb-4 px-1">
             <h3 className="text-base font-black text-gray-900 tracking-tight flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-green-500" />
-              Service History
+              {t('Service History')}
             </h3>
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{history.length} COMPLETED</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{history.length} {t('COMPLETED')}</span>
           </div>
           <div className="space-y-3">
             {history.map((order) => (
@@ -333,7 +337,7 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                 
                 <div className="flex items-center justify-between pt-3 border-t border-gray-100/50">
                   <Badge variant="outline" className="text-[9px] font-black bg-green-50 text-green-600 border-green-100 uppercase h-5">
-                    Service Delivered
+                    {t('Service Delivered')}
                   </Badge>
                   <Button 
                     size="sm" 
@@ -341,7 +345,7 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                     className="h-7 text-[10px] font-bold text-purple-600 hover:text-purple-700 p-0"
                     onClick={() => onViewWorker(order.workerPhone)}
                   >
-                    View Worker Profile <ChevronRight className="w-3 h-3 ml-1" />
+                    {t('View Worker Profile')} <ChevronRight className="w-3 h-3 ml-1" />
                   </Button>
                 </div>
               </Card>
@@ -356,6 +360,7 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
 
 function OrdersTab({ onEnlargeImage }: { onEnlargeImage: (url: string) => void }) {
   const { workerData } = useWorkflow();
+  const { t } = useLanguage();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -407,12 +412,12 @@ function OrdersTab({ onEnlargeImage }: { onEnlargeImage: (url: string) => void }
 
   return (
     <div className="h-full flex flex-col pt-4 px-4 pb-24 animate-in fade-in overflow-y-auto scrollbar-hide">
-      <h2 className="text-xl font-bold text-gray-900 mb-6 px-1">My Orders</h2>
+      <h2 className="text-xl font-bold text-gray-900 mb-6 px-1">{t('My Orders')}</h2>
       {orders.length === 0 ? (
         <EmptyState
           icon={<FileText className="w-8 h-8" />}
-          title="No orders yet"
-          description="Your service history will appear here once you book a worker."
+          title={t('No orders yet')}
+          description={t('Your service history will appear here once you book a worker.')}
         />
       ) : (
         <div className="space-y-4">
@@ -459,7 +464,7 @@ function OrdersTab({ onEnlargeImage }: { onEnlargeImage: (url: string) => void }
                       disabled={deletingId === order._id}
                       className="h-7 text-[10px] font-bold text-red-500 uppercase tracking-wider p-0 bg-transparent border-0 hover:bg-transparent"
                     >
-                      {deletingId === order._id ? 'Cancelling...' : 'Cancel'}
+                      {deletingId === order._id ? t('Cancelling...') : t('Cancel')}
                     </Button>
                   )}
                 </div>
@@ -476,12 +481,12 @@ function OrdersTab({ onEnlargeImage }: { onEnlargeImage: (url: string) => void }
             <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center mb-2">
               <AlertTriangle className="w-6 h-6 text-red-500" />
             </div>
-            <AlertDialogTitle className="text-xl font-black text-gray-900 tracking-tight">Cancel Order?</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm font-medium text-gray-500">This will permanently delete your request.</AlertDialogDescription>
+            <AlertDialogTitle className="text-xl font-black text-gray-900 tracking-tight">{t('Cancel Order?')}</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm font-medium text-gray-500">{t('This will permanently delete your request.')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex gap-3 mt-4">
-            <AlertDialogCancel className="rounded-2xl border-gray-100 h-12 flex-1 uppercase text-[11px] tracking-widest text-gray-400">Back</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteOrder} className="rounded-2xl bg-red-500 hover:bg-red-600 h-12 flex-1 uppercase text-[11px] tracking-widest text-white border-0">Cancel Order</AlertDialogAction>
+            <AlertDialogCancel className="rounded-2xl border-gray-100 h-12 flex-1 uppercase text-[11px] tracking-widest text-gray-400">{t('Back')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteOrder} className="rounded-2xl bg-red-500 hover:bg-red-600 h-12 flex-1 uppercase text-[11px] tracking-widest text-white border-0">{t('Cancel Order')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -490,6 +495,7 @@ function OrdersTab({ onEnlargeImage }: { onEnlargeImage: (url: string) => void }
 }
 
 function AccountTab({ handleLogout, phone, updateWorkerData }: { handleLogout: () => void, phone: string, updateWorkerData: any }) {
+  const { t } = useLanguage();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('main'); 
@@ -609,13 +615,13 @@ function AccountTab({ handleLogout, phone, updateWorkerData }: { handleLogout: (
   if (view === 'profile') {
     return (
       <div className="pb-24 animate-in fade-in slide-in-from-right-4 duration-300 px-4 pt-4">
-        <Button variant="ghost" className="mb-4" onClick={() => setView('main')}><ChevronRight className="rotate-180 mr-2" /> Back</Button>
+        <Button variant="ghost" className="mb-4" onClick={() => setView('main')}><ChevronRight className="rotate-180 mr-2" /> {t('Back')}</Button>
         <Card className="p-5">
            <form onSubmit={handleProfileUpdate} className="space-y-4">
-            <Label>Name</Label><Input value={editName} onChange={e => setEditName(e.target.value)} />
-            <Label>Phone</Label><Input value={editPhone} onChange={e => setEditPhone(e.target.value)} />
-            <Label>City</Label><Input value={editCity} onChange={e => setEditCity(e.target.value)} />
-            <Button className="w-full bg-purple-600 text-white" disabled={profileLoading}>Save</Button>
+            <Label>{t('Name')}</Label><Input value={editName} onChange={e => setEditName(e.target.value)} />
+            <Label>{t('Phone')}</Label><Input value={editPhone} onChange={e => setEditPhone(e.target.value)} />
+            <Label>{t('City')}</Label><Input value={editCity} onChange={e => setEditCity(e.target.value)} />
+            <Button className="w-full bg-purple-600 text-white" disabled={profileLoading}>{t('Save')}</Button>
            </form>
         </Card>
       </div>
@@ -625,33 +631,33 @@ function AccountTab({ handleLogout, phone, updateWorkerData }: { handleLogout: (
   if (view === 'changePassword') {
     return (
       <div className="pb-24 animate-in fade-in slide-in-from-right-4 duration-300 px-4 pt-4">
-        <Button variant="ghost" className="mb-4" onClick={() => { setView('main'); setPasswordError(''); setPasswordSuccess(''); }}><ChevronRight className="rotate-180 mr-2" /> Back</Button>
+        <Button variant="ghost" className="mb-4" onClick={() => { setView('main'); setPasswordError(''); setPasswordSuccess(''); }}><ChevronRight className="rotate-180 mr-2" /> {t('Back')}</Button>
         <Card className="p-6 border-0 shadow-xl bg-white rounded-3xl">
           <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
             <Shield className="w-5 h-5 text-purple-600" />
-            Update Password
+            {t('Update Password')}
           </h3>
           <form onSubmit={handlePasswordChange} className="space-y-4">
             {passwordError && <div className="p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold animate-in shake-in-1">{passwordError}</div>}
             {passwordSuccess && <div className="p-3 bg-green-50 text-green-600 rounded-xl text-xs font-bold animate-in zoom-in-95">{passwordSuccess}</div>}
             
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Current Password</Label>
+              <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('Current Password')}</Label>
               <Input type="password" value={oldPassword} onChange={e => setOldPassword(e.target.value)} className="rounded-xl h-12 bg-gray-50 border-gray-100" required />
             </div>
             
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">New Password</Label>
-              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="rounded-xl h-12 bg-gray-50 border-gray-100" placeholder="Min 6 characters" required />
+              <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('New Password')}</Label>
+              <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="rounded-xl h-12 bg-gray-50 border-gray-100" placeholder={t('Min 6 characters')} required />
             </div>
             
             <div className="space-y-1.5">
-              <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Confirm New Password</Label>
+              <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">{t('Confirm New Password')}</Label>
               <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="rounded-xl h-12 bg-gray-50 border-gray-100" required />
             </div>
             
             <Button className="w-full bg-purple-600 text-white h-12 rounded-xl font-bold shadow-lg shadow-purple-100 mt-4" disabled={profileLoading}>
-              {profileLoading ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : 'Update Password'}
+              {profileLoading ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : t('Update Password')}
             </Button>
           </form>
         </Card>
@@ -679,24 +685,24 @@ function AccountTab({ handleLogout, phone, updateWorkerData }: { handleLogout: (
           <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center mb-2 group-hover:bg-blue-500 transition-colors">
             <User className="w-5 h-5 text-blue-500 group-hover:text-white" />
           </div>
-          <p className="text-sm font-bold text-gray-900 text-left">Profile</p>
-          <p className="text-[10px] text-gray-400 uppercase tracking-tight text-left">Edit info</p>
+          <p className="text-sm font-bold text-gray-900 text-left">{t('Profile')}</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-tight text-left">{t('Edit info')}</p>
         </Card>
         
         <Card className="p-4 cursor-pointer hover:bg-gray-50 group border-gray-100 shadow-sm" onClick={() => setView('changePassword')}>
           <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center mb-2 group-hover:bg-purple-500 transition-colors">
             <Lock className="w-5 h-5 text-purple-500 group-hover:text-white" />
           </div>
-          <p className="text-sm font-bold text-gray-900 text-left">Security</p>
-          <p className="text-[10px] text-gray-400 uppercase tracking-tight text-left">Password</p>
+          <p className="text-sm font-bold text-gray-900 text-left">{t('Security')}</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-tight text-left">{t('Password')}</p>
         </Card>
 
         <Card className="p-4 cursor-pointer hover:bg-red-50 group border-gray-100 shadow-sm transition-colors" onClick={handleLogout}>
           <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center mb-2 group-hover:bg-red-500 transition-colors">
             <LogOut className="w-5 h-5 text-red-500 group-hover:text-white" />
           </div>
-          <p className="text-sm font-bold text-gray-900 text-left">Logout</p>
-          <p className="text-[10px] text-gray-400 uppercase tracking-tight text-left">Exit App</p>
+          <p className="text-sm font-bold text-gray-900 text-left">{t('Logout')}</p>
+          <p className="text-[10px] text-gray-400 uppercase tracking-tight text-left">{t('Exit App')}</p>
         </Card>
       </div>
     </div>
@@ -707,6 +713,7 @@ function AccountTab({ handleLogout, phone, updateWorkerData }: { handleLogout: (
 
 export function ConsumerDashboard() {
   const { setCurrentStep, workerData, updateWorkerData } = useWorkflow();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
       return sessionStorage.getItem('worklink_consumer_activeTab') || 'home';
@@ -905,15 +912,15 @@ export function ConsumerDashboard() {
               <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <MessageSquare className="w-8 h-8 text-purple-600" />
               </div>
-              <DialogTitle className="text-xl font-black text-gray-900 tracking-tight">Demo Completed!</DialogTitle>
+              <DialogTitle className="text-xl font-black text-gray-900 tracking-tight">{t('Demo Completed!')}</DialogTitle>
               <p className="text-sm font-medium text-gray-500 mt-2">
-                Please leave a review and let us know your opinion on the application.
+                {t('Please leave a review and let us know your opinion on the application.')}
               </p>
             </DialogHeader>
             <div className="flex gap-3 mt-6">
-              <Button variant="ghost" onClick={() => setShowFeedbackModal(false)} className="flex-1 text-gray-500 hover:bg-gray-50 font-bold h-12 rounded-2xl">Cancel</Button>
+              <Button variant="ghost" onClick={() => setShowFeedbackModal(false)} className="flex-1 text-gray-500 hover:bg-gray-50 font-bold h-12 rounded-2xl">{t('Cancel')}</Button>
               <a href="https://forms.gle/VSdt18tJrmbN7PxG8" target="_blank" rel="noopener noreferrer" className="flex-1">
-                <Button className="w-full bg-purple-600 text-white font-bold h-12 rounded-2xl" onClick={() => setShowFeedbackModal(false)}>OK</Button>
+                <Button className="w-full bg-purple-600 text-white font-bold h-12 rounded-2xl" onClick={() => setShowFeedbackModal(false)}>{t('OK')}</Button>
               </a>
             </div>
           </DialogContent>
@@ -936,11 +943,11 @@ export function ConsumerDashboard() {
           <div className="max-w-md mx-auto flex items-center justify-between w-full">
             <div className="flex items-center gap-3">
               <Avatar className="w-9 h-9 border border-purple-100 rounded-lg overflow-hidden bg-gray-50">
-                {workerData.profileImage ? <img src={workerData.profileImage} className="w-full h-full object-cover" /> : <AvatarFallback className="bg-purple-600 text-white text-[13px] font-bold">{getInitials(workerData.name || 'User')}</AvatarFallback>}
+                {workerData.profileImage ? <img src={workerData.profileImage} className="w-full h-full object-cover" /> : <AvatarFallback className="bg-purple-600 text-white text-[13px] font-bold">{getInitials(workerData.name || t('User'))}</AvatarFallback>}
               </Avatar>
               <div className="flex flex-col">
                 <p className="font-semibold text-foreground text-sm leading-tight">{workerData.name || 'WorkLink'}</p>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Consumer Dashboard</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">{t('Consumer Dashboard')}</p>
               </div>
             </div>
             <Menu className="w-5 h-5 text-muted-foreground" />
@@ -954,13 +961,13 @@ export function ConsumerDashboard() {
         <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border px-4 py-2">
           <div className="max-w-md mx-auto flex justify-around items-center">
             <button onClick={() => handleTabChange('home')} className={`flex flex-col items-center gap-1 py-1 px-4 ${activeTab === 'home' ? 'text-purple-600' : 'text-muted-foreground'}`}>
-              <Home className="w-5 h-5" /><span className="text-[10px] font-semibold">Home</span>
+              <Home className="w-5 h-5" /><span className="text-[10px] font-semibold">{t('Home')}</span>
             </button>
             <button onClick={() => handleTabChange('orders')} className={`flex flex-col items-center gap-1 py-1 px-4 ${activeTab === 'orders' ? 'text-purple-600' : 'text-muted-foreground'}`}>
-              <FileText className="w-5 h-5" /><span className="text-[10px] font-semibold">Orders</span>
+              <FileText className="w-5 h-5" /><span className="text-[10px] font-semibold">{t('Orders')}</span>
             </button>
             <button onClick={() => handleTabChange('account')} className={`flex flex-col items-center gap-1 py-1 px-4 ${activeTab === 'account' ? 'text-purple-600' : 'text-muted-foreground'}`}>
-              <User className="w-5 h-5" /><span className="text-[10px] font-semibold">Account</span>
+              <User className="w-5 h-5" /><span className="text-[10px] font-semibold">{t('Account')}</span>
             </button>
           </div>
         </nav>

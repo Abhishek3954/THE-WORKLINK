@@ -199,14 +199,28 @@ export function WorkLinkEligibility() {
       {!checking && (
         <footer className="sticky bottom-0 bg-card border-t border-border px-4 py-4">
           <div className="max-w-md mx-auto flex gap-4">
-            <Button variant="outline" onClick={handleBack} className="flex-1">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button onClick={handleContinue} className="flex-1">
-              {workerData.isEligibleForWorkLink ? 'Continue' : 'Go to Dashboard'}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            {workerData.isEligibleForWorkLink ? (
+              <>
+                <Button variant="outline" onClick={handleBack} className="flex-1">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <Button onClick={handleContinue} className="flex-1">
+                  Continue
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={handleContinue} className="flex-1">
+                  Gig Dashboard
+                </Button>
+                <Button onClick={() => setCurrentStep('worklink-survey')} className="flex-1 bg-violet-600 hover:bg-violet-700">
+                  Demo Employee
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </>
+            )}
           </div>
         </footer>
       )}

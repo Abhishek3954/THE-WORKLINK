@@ -4,9 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useWorkflow } from '@/lib/workflow-context'
 import { Briefcase, Users, CheckCircle, ArrowRight } from 'lucide-react'
+import { useLanguage } from '@/lib/i18n-context'
 
 export function SelectionScreen() {
   const { setCurrentStep, updateWorkerData } = useWorkflow()
+  const { t } = useLanguage()
 
   const chooseWorker = () => {
     updateWorkerData({ workerType: 'gig' })
@@ -41,10 +43,10 @@ export function SelectionScreen() {
 
           <div className="mb-8 animate-fade-in animation-delay-1000">
             <p className="text-xl sm:text-2xl text-slate-600 mb-4 font-medium">
-              Connecting Skills with Opportunities
+              {t('Connecting Skills with Opportunities')}
             </p>
             <p className="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
-              A streamlined platform for gig workers and businesses to connect, collaborate, and grow together.
+              {t('A streamlined platform for gig workers and businesses to connect, collaborate, and grow together.')}
             </p>
           </div>
         </div>
@@ -54,9 +56,9 @@ export function SelectionScreen() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Choose Your Path */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-slate-900 mb-4">Get Started</h2>
+          <h2 className="text-3xl font-bold text-slate-900 mb-4">{t('Get Started')}</h2>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Choose how you'd like to use Worklink - whether you're here to work or to hire.
+            {t("Choose how you'd like to use Worklink - whether you're here to work or to hire.")}
           </p>
         </div>
 
@@ -73,8 +75,8 @@ export function SelectionScreen() {
                   <Briefcase className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl text-slate-900 group-hover:text-blue-900 transition-colors">Join as Worker</CardTitle>
-                  <CardDescription className="text-slate-600">Offer your skills and find opportunities</CardDescription>
+                  <CardTitle className="text-2xl text-slate-900 group-hover:text-blue-900 transition-colors">{t('Join as Worker')}</CardTitle>
+                  <CardDescription className="text-slate-600">{t('Offer your skills and find opportunities')}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -83,22 +85,22 @@ export function SelectionScreen() {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-slate-900">Profile Setup</p>
-                    <p className="text-sm text-slate-600">Create your professional profile and showcase your skills</p>
+                    <p className="font-medium text-slate-900">{t('Profile Setup')}</p>
+                    <p className="text-sm text-slate-600">{t('Create your professional profile and showcase your skills')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-slate-900">Skill Assessment</p>
-                    <p className="text-sm text-slate-600">Complete assessments to highlight your expertise</p>
+                    <p className="font-medium text-slate-900">{t('Skill Assessment')}</p>
+                    <p className="text-sm text-slate-600">{t('Complete assessments to highlight your expertise')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-slate-900">Job Matching</p>
-                    <p className="text-sm text-slate-600">Get matched with relevant opportunities</p>
+                    <p className="font-medium text-slate-900">{t('Job Matching')}</p>
+                    <p className="text-sm text-slate-600">{t('Get matched with relevant opportunities')}</p>
                   </div>
                 </div>
               </div>
@@ -106,7 +108,7 @@ export function SelectionScreen() {
                 onClick={chooseWorker}
                 className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-lg transition-all duration-300 group-hover:shadow-lg"
               >
-                Start as Worker
+                {t('Start as Worker')}
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </CardContent>
@@ -123,8 +125,8 @@ export function SelectionScreen() {
                   <Users className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl text-slate-900 group-hover:text-purple-900 transition-colors">Join as Consumer</CardTitle>
-                  <CardDescription className="text-slate-600">Find and hire skilled professionals</CardDescription>
+                  <CardTitle className="text-2xl text-slate-900 group-hover:text-purple-900 transition-colors">{t('Join as Consumer')}</CardTitle>
+                  <CardDescription className="text-slate-600">{t('Find and hire skilled professionals')}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -133,22 +135,22 @@ export function SelectionScreen() {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-slate-900">Eligibility Check</p>
-                    <p className="text-sm text-slate-600">Verify your business requirements</p>
+                    <p className="font-medium text-slate-900">{t('Eligibility Check')}</p>
+                    <p className="text-sm text-slate-600">{t('Verify your business requirements')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-slate-900">Worker Discovery</p>
-                    <p className="text-sm text-slate-600">Browse and connect with qualified professionals</p>
+                    <p className="font-medium text-slate-900">{t('Worker Discovery')}</p>
+                    <p className="text-sm text-slate-600">{t('Browse and connect with qualified professionals')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-medium text-slate-900">Project Management</p>
-                    <p className="text-sm text-slate-600">Manage jobs and track progress</p>
+                    <p className="font-medium text-slate-900">{t('Project Management')}</p>
+                    <p className="text-sm text-slate-600">{t('Manage jobs and track progress')}</p>
                   </div>
                 </div>
               </div>
@@ -156,7 +158,7 @@ export function SelectionScreen() {
                 onClick={chooseConsumer}
                 className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold py-3 rounded-lg transition-all duration-300 group-hover:shadow-lg"
               >
-                Start as Consumer
+                {t('Start as Consumer')}
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </CardContent>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useWorkflow } from '@/lib/workflow-context'
+import { useLanguage } from '@/lib/i18n-context'
 import { SurveyLayout } from './survey-layout'
 import { SkillCard } from './skill-card'
 import { Label } from '@/components/ui/label'
@@ -159,6 +160,7 @@ const CANCELLATION_OPTIONS = [
 
 export function GigWorkerSurvey() {
   const { workerData, updateWorkerData, setCurrentStep } = useWorkflow()
+  const { t } = useLanguage()
   const [step, setStep] = useState(1)
   const [profile, setProfile] = useState<Partial<GigWorkerProfile>>(workerData.gigProfile)
   const [isRegistration, setIsRegistration] = useState(!workerData.name || !workerData.phone)
@@ -286,7 +288,7 @@ export function GigWorkerSurvey() {
               <SkillCard
                 key={skill.id}
                 icon={skill.icon}
-                label={skill.label}
+                label={t(skill.label)}
                 selected={profile.primarySkill === skill.id}
                 onClick={() => updateProfile({ primarySkill: skill.id })}
               />
@@ -313,7 +315,7 @@ export function GigWorkerSurvey() {
                     }
                   }}
                 />
-                <span className="text-sm font-medium">{skill}</span>
+                <span className="text-sm font-medium">{t(skill)}</span>
               </label>
             ))}
           </div>
@@ -323,7 +325,7 @@ export function GigWorkerSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>How much experience do you have?</Label>
+              <Label>{t('How much experience do you have?')}</Label>
               <Select
                 value={profile.yearsOfExperience}
                 onValueChange={(value) => updateProfile({ yearsOfExperience: value })}
@@ -333,14 +335,14 @@ export function GigWorkerSurvey() {
                 </SelectTrigger>
                 <SelectContent>
                   {EXPERIENCE_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                    <SelectItem key={option} value={option}>{t(option)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-3">
-              <Label>Where have you worked before?</Label>
+              <Label>{t('Where have you worked before?')}</Label>
               <RadioGroup
                 value={profile.workBackground ?? ''}
                 onValueChange={(value) => updateProfile({ workBackground: value })}
@@ -352,14 +354,14 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
             </div>
 
             <div className="space-y-3">
-              <Label>Approximately how many jobs have you completed?</Label>
+              <Label>{t('Approximately how many jobs have you completed?')}</Label>
               <RadioGroup
                 value={profile.jobsCompleted ?? ''}
                 onValueChange={(value) => updateProfile({ jobsCompleted: value })}
@@ -371,7 +373,7 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
@@ -383,7 +385,7 @@ export function GigWorkerSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>Do you have your own tools?</Label>
+              <Label>{t('Do you have your own tools?')}</Label>
               <RadioGroup
                 value={profile.toolsAvailability ?? ''}
                 onValueChange={(value) => updateProfile({ toolsAvailability: value })}
@@ -395,14 +397,14 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
             </div>
 
             <div className="space-y-3">
-              <Label>Who will provide materials?</Label>
+              <Label>{t('Who will provide materials?')}</Label>
               <RadioGroup
                 value={profile.materialHandling ?? ''}
                 onValueChange={(value) => updateProfile({ materialHandling: value })}
@@ -414,7 +416,7 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
@@ -426,7 +428,7 @@ export function GigWorkerSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>How do you want to work?</Label>
+              <Label>{t('How do you want to work?')}</Label>
               <RadioGroup
                 value={profile.workType ?? ''}
                 onValueChange={(value) => updateProfile({ workType: value })}
@@ -438,14 +440,14 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
             </div>
 
             <div className="space-y-3">
-              <Label>When are you usually available?</Label>
+              <Label>{t('When are you usually available?')}</Label>
               <RadioGroup
                 value={profile.availability ?? ''}
                 onValueChange={(value) => updateProfile({ availability: value })}
@@ -457,14 +459,14 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
             </div>
 
             <div className="space-y-3">
-              <Label>What type of jobs do you prefer? (Select all that apply)</Label>
+              <Label>{t('What type of jobs do you prefer? (Select all that apply)')}</Label>
               <div className="space-y-2">
                 {JOB_PREFERENCE_OPTIONS.map((option) => (
                   <label
@@ -482,7 +484,7 @@ export function GigWorkerSurvey() {
                         }
                       }}
                     />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </div>
@@ -494,7 +496,7 @@ export function GigWorkerSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>How far can you travel?</Label>
+              <Label>{t('How far can you travel?')}</Label>
               <RadioGroup
                 value={profile.travelRange ?? ''}
                 onValueChange={(value) => updateProfile({ travelRange: value })}
@@ -506,14 +508,14 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
             </div>
 
             <div className="space-y-3">
-              <Label>Are you willing to travel far if needed?</Label>
+              <Label>{t('Are you willing to travel far if needed?')}</Label>
               <RadioGroup
                 value={profile.travelWillingness ?? ''}
                 onValueChange={(value) => updateProfile({ travelWillingness: value })}
@@ -525,14 +527,14 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
             </div>
 
             <div className="space-y-3">
-              <Label>Do you have your own vehicle?</Label>
+              <Label>{t('Do you have your own vehicle?')}</Label>
               <RadioGroup
                 value={profile.hasVehicle ?? ''}
                 onValueChange={(value) => updateProfile({ hasVehicle: value })}
@@ -544,7 +546,7 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
@@ -555,7 +557,7 @@ export function GigWorkerSurvey() {
       case 7:
         return (
           <div className="space-y-3">
-            <Label>Which languages can you speak? (Select all that apply)</Label>
+            <Label>{t('Which languages can you speak? (Select all that apply)')}</Label>
             <div className="space-y-2">
               {LANGUAGE_OPTIONS.map((option) => (
                 <label
@@ -573,7 +575,7 @@ export function GigWorkerSurvey() {
                       }
                     }}
                   />
-                  <span className="text-sm font-medium">{option}</span>
+                  <span className="text-sm font-medium">{t(option)}</span>
                 </label>
               ))}
             </div>
@@ -584,7 +586,7 @@ export function GigWorkerSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>How do you prefer to get paid?</Label>
+              <Label>{t('How do you prefer to get paid?')}</Label>
               <RadioGroup
                 value={profile.paymentPreference ?? ''}
                 onValueChange={(value) => updateProfile({ paymentPreference: value })}
@@ -596,14 +598,14 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
             </div>
 
             <div className="space-y-3">
-              <Label>What is your expected minimum earning per day?</Label>
+              <Label>{t('What is your expected minimum earning per day?')}</Label>
               <RadioGroup
                 value={profile.expectedDailyIncome ?? ''}
                 onValueChange={(value) => updateProfile({ expectedDailyIncome: value })}
@@ -615,7 +617,7 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
@@ -627,7 +629,7 @@ export function GigWorkerSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>Upload your ID proof</Label>
+              <Label>{t('Upload your ID proof')}</Label>
               <RadioGroup
                 value={profile.idProofType ?? ''}
                 onValueChange={(value) => updateProfile({ idProofType: value })}
@@ -639,20 +641,20 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
               {profile.idProofType && (
                 <Button variant="outline" className="w-full mt-2">
                   <Upload className="w-4 h-4 mr-2" />
-                  Upload {profile.idProofType}
+                  {t('Upload')} {t(profile.idProofType)}
                 </Button>
               )}
             </div>
 
             <div className="space-y-3">
-              <Label>Do you have photos of your past work?</Label>
+              <Label>{t('Do you have photos of your past work?')}</Label>
               <RadioGroup
                 value={profile.hasWorkPhotos ?? ''}
                 onValueChange={(value) => updateProfile({ hasWorkPhotos: value })}
@@ -660,23 +662,23 @@ export function GigWorkerSurvey() {
               >
                 <label className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors">
                   <RadioGroupItem value="yes" />
-                  <span className="text-sm font-medium">Yes</span>
+                  <span className="text-sm font-medium">{t('Yes')}</span>
                 </label>
                 <label className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors">
                   <RadioGroupItem value="no" />
-                  <span className="text-sm font-medium">No</span>
+                  <span className="text-sm font-medium">{t('No')}</span>
                 </label>
               </RadioGroup>
               {profile.hasWorkPhotos === 'yes' && (
                 <Button variant="outline" className="w-full mt-2">
                   <Camera className="w-4 h-4 mr-2" />
-                  Upload Work Photos
+                  {t('Upload Work Photos')}
                 </Button>
               )}
             </div>
 
             <div className="space-y-3">
-              <Label>Do you have any certification?</Label>
+              <Label>{t('Do you have any certification?')}</Label>
               <RadioGroup
                 value={profile.hasCertification ?? ''}
                 onValueChange={(value) => updateProfile({ hasCertification: value })}
@@ -684,11 +686,11 @@ export function GigWorkerSurvey() {
               >
                 <label className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors">
                   <RadioGroupItem value="yes" />
-                  <span className="text-sm font-medium">Yes</span>
+                  <span className="text-sm font-medium">{t('Yes')}</span>
                 </label>
                 <label className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors">
                   <RadioGroupItem value="no" />
-                  <span className="text-sm font-medium">No</span>
+                  <span className="text-sm font-medium">{t('No')}</span>
                 </label>
               </RadioGroup>
             </div>
@@ -699,7 +701,7 @@ export function GigWorkerSurvey() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label>If you accept a job, will you complete it on time?</Label>
+              <Label>{t('If you accept a job, will you complete it on time?')}</Label>
               <RadioGroup
                 value={profile.jobCommitment ?? ''}
                 onValueChange={(value) => updateProfile({ jobCommitment: value })}
@@ -711,14 +713,14 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
             </div>
 
             <div className="space-y-3">
-              <Label>How often do you cancel jobs?</Label>
+              <Label>{t('How often do you cancel jobs?')}</Label>
               <RadioGroup
                 value={profile.cancellationBehavior ?? ''}
                 onValueChange={(value) => updateProfile({ cancellationBehavior: value })}
@@ -730,7 +732,7 @@ export function GigWorkerSurvey() {
                     className="flex items-center gap-3 p-4 rounded-lg border border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
                   >
                     <RadioGroupItem value={option} />
-                    <span className="text-sm font-medium">{option}</span>
+                    <span className="text-sm font-medium">{t(option)}</span>
                   </label>
                 ))}
               </RadioGroup>
@@ -897,14 +899,14 @@ export function GigWorkerSurvey() {
 
   return (
     <SurveyLayout
-      title={getStepTitle()}
-      subtitle={getStepSubtitle()}
+      title={t(getStepTitle())}
+      subtitle={t(getStepSubtitle())}
       currentStep={step}
       totalSteps={TOTAL_STEPS}
       onNext={handleNext}
       onBack={handleBack}
       canProceed={canProceed()}
-      nextLabel={step === TOTAL_STEPS ? 'Complete Profile' : 'Continue'}
+      nextLabel={step === TOTAL_STEPS ? t('Complete Profile') : t('Continue')}
     >
       {renderStep()}
     </SurveyLayout>
