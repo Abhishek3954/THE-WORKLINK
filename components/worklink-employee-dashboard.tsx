@@ -1396,7 +1396,7 @@ export function WorkLinkEmployeeDashboard() {
       />
 
       <Dialog open={showFeedbackModal} onOpenChange={(open) => !open && setShowFeedbackModal(false)}>
-        <DialogContent className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl text-center">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl text-center">
           <DialogHeader>
             <div className="w-16 h-16 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <MessageSquare className="w-8 h-8 text-violet-600" />
@@ -1441,7 +1441,7 @@ function ConsumerDetailsModal({ phone, onClose }: { phone: string | null, onClos
 
   return (
     <Dialog open={!!phone} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-white rounded-3xl p-0 border-0 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md bg-white rounded-3xl p-0 border-0 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         {loading ? (
           <div className="p-12 flex flex-col items-center gap-4">
             <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />

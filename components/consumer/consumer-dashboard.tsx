@@ -828,7 +828,7 @@ export function ConsumerDashboard() {
             isDemo: paymentModal.order?.isDemo
           });
         }
-        fetchOrders();
+        await fetchOrders();
       }
     } catch (err) {
       console.error("Error updating status:", err);
@@ -900,7 +900,7 @@ export function ConsumerDashboard() {
           scheduledTime={ongoingWork.find(o => o.workerPhone === selectedWorkerPhone)?.scheduledTime}
         />
         <Dialog open={showFeedbackModal} onOpenChange={(open) => !open && setShowFeedbackModal(false)}>
-          <DialogContent className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl text-center">
+          <DialogContent aria-describedby={undefined} className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl text-center">
             <DialogHeader>
               <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <MessageSquare className="w-8 h-8 text-purple-600" />
@@ -967,7 +967,7 @@ export function ConsumerDashboard() {
 
         {/* Full Image Preview Modal */}
         <Dialog open={!!selectedFullImage} onOpenChange={(open) => !open && setSelectedFullImage(null)}>
-          <DialogContent className="max-w-3xl p-0 border-0 bg-transparent flex items-center justify-center">
+          <DialogContent aria-describedby={undefined} className="max-w-3xl p-0 border-0 bg-transparent flex items-center justify-center">
             <DialogHeader className="sr-only">
               <DialogTitle>Image Preview</DialogTitle>
             </DialogHeader>
@@ -1236,7 +1236,7 @@ function WorkerDetailsModal({ phone, onClose, scheduledTime }: { phone: string |
 
   return (
     <Dialog open={!!phone} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-white rounded-3xl p-0 border-0 shadow-2xl overflow-hidden">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md bg-white rounded-3xl p-0 border-0 shadow-2xl overflow-hidden">
         {loading ? (
           <>
             <DialogHeader className="sr-only"><DialogTitle>Loading Worker Details</DialogTitle></DialogHeader>
@@ -1288,23 +1288,21 @@ function StaticPaymentModal({ isOpen, onClose, amount, onSuccess, stage }: {
   isOpen: boolean, 
   onClose: () => void, 
   amount: number, 
-  onSuccess: () => void,
+  onSuccess: () => Promise<void> | void,
   stage: 'initial' | 'final'
 }) {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setIsProcessing(true);
-    setTimeout(() => {
-      setIsProcessing(false);
-      onSuccess();
-      onClose();
-    }, 2000);
+    await onSuccess();
+    setIsProcessing(false);
+    onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-white rounded-3xl p-6 border-0 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md bg-white rounded-3xl p-6 border-0 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         <DialogHeader className="mb-4">
           <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center mb-2">
             <CreditCard className="w-6 h-6 text-green-600" />
@@ -1367,7 +1365,7 @@ function RatingModal({ isOpen, onClose, onSubmit, workerName }: {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl text-center">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl text-center">
         <DialogHeader>
           <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Star className="w-8 h-8 text-amber-500 fill-amber-500" />

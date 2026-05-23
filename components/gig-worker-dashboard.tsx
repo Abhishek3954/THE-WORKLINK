@@ -860,7 +860,7 @@ export function GigWorkerDashboard() {
 
       {/* Full Image Preview Modal */}
       <Dialog open={!!selectedFullImage} onOpenChange={(open) => !open && setSelectedFullImage(null)}>
-        <DialogContent className="max-w-3xl p-0 border-0 bg-transparent flex items-center justify-center">
+        <DialogContent aria-describedby={undefined} className="max-w-3xl p-0 border-0 bg-transparent flex items-center justify-center">
           <DialogHeader className="sr-only">
             <DialogTitle>Image Preview</DialogTitle>
           </DialogHeader>
@@ -891,7 +891,7 @@ export function GigWorkerDashboard() {
       />
 
       <Dialog open={showFeedbackModal} onOpenChange={(open) => !open && setShowFeedbackModal(false)}>
-        <DialogContent className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl text-center">
+        <DialogContent aria-describedby={undefined} className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl text-center">
           <DialogHeader>
             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <MessageSquare className="w-8 h-8 text-primary" />
@@ -917,7 +917,7 @@ function PaymentReceivedPopup({ isOpen, onClose, order, type }: { isOpen: boolea
   if (!order) return null;
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl animate-in zoom-in-95 duration-300">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl animate-in zoom-in-95 duration-300">
         <DialogHeader className="flex flex-col items-center text-center">
           <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mb-4">
              <div className="relative">
@@ -960,7 +960,7 @@ function AcceptJobModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-white rounded-3xl p-6 border-0 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md bg-white rounded-3xl p-6 border-0 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <DialogHeader className="mb-4">
           <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-2">
             <Zap className="w-6 h-6 text-primary" />
@@ -1059,7 +1059,7 @@ function ConsumerDetailsModal({ phone, onClose }: { phone: string | null, onClos
 
   return (
     <Dialog open={!!phone} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-white rounded-3xl p-0 border-0 shadow-2xl overflow-hidden">
+      <DialogContent aria-describedby={undefined} className="sm:max-w-md bg-white rounded-3xl p-0 border-0 shadow-2xl overflow-hidden">
         {loading ? (
           <div className="p-12 flex flex-col items-center gap-4">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
