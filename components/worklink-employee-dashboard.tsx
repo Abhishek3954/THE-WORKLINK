@@ -7,7 +7,7 @@ import {
   Briefcase, Clock, MapPin, Star, Wallet, ChevronRight, User,
   Phone, Settings, Bell, Search, Filter, Zap, ArrowUpRight,
   CheckCircle2, CircleDot, Calendar, Info, X, Loader2, Users, Trophy,
-  AlertTriangle, RefreshCw, UserPlus, TrendingUp
+  AlertTriangle, RefreshCw, UserPlus, TrendingUp, MessageSquare
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
@@ -64,6 +64,10 @@ export function WorkLinkEmployeeDashboard() {
   const [error, setError] = useState('')
   const [selectedFullImage, setSelectedFullImage] = useState<string | null>(null)
   const [selectedConsumerPhone, setSelectedConsumerPhone] = useState<string | null>(null)
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false)
+
+  // Demo State
+  const [demoOrderState, setDemoOrderState] = useState<{ active: boolean, orderId: string, timer: number, step: number }>({ active: false, orderId: '', timer: 0, step: 0 })
 
   // Recruitment States
   const [recruitType, setRecruitType] = useState<'none' | 'rookie' | 'mentor'>('none')
@@ -157,6 +161,65 @@ export function WorkLinkEmployeeDashboard() {
       setLoadingJobs(false)
     }
   }
+
+  // Demo Runner Logic
+  useEffect(() => {
+    if (demoOrderState.active && activeTab === 'home') {
+      setTimeout(() => {
+        const el = document.getElementById('demo-job-card');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 500);
+    }
+  }, [demoOrderState.active, activeTab]);
+
+  useEffect(() => {
+    let interval: any;
+    if (demoOrderState.active && demoOrderState.timer > 0) {
+      interval = setInterval(() => {
+        setDemoOrderState(prev => ({ ...prev, timer: prev.timer - 1 }));
+      }, 1000);
+    } else if (demoOrderState.active && demoOrderState.timer === 0) {
+      if (demoOrderState.step === 1) {
+        setDemoOrderState(prev => ({ ...prev, step: 0 }));
+        fetch('/api/demo/worker', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: demoOrderState.orderId, paymentStatus: 'half', status: 'ongoing' })
+        }).then(() => {
+          fetchAcceptedJobs();
+        });
+      } else if (demoOrderState.step === 2) {
+        setDemoOrderState({ active: false, orderId: '', timer: 0, step: 0 });
+        fetch('/api/demo/worker', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: demoOrderState.orderId, paymentStatus: 'full', status: 'completed', rating: 4 })
+        }).then(() => {
+          fetchAcceptedJobs();
+          setTimeout(() => setShowFeedbackModal(true), 2500);
+        });
+      }
+    }
+    return () => clearInterval(interval);
+  }, [demoOrderState]);
+
+  const handleStartDemo = async () => {
+    try {
+      const res = await fetch('/api/demo/worker', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workerPhone: workerData.phone })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDemoOrderState({ active: true, orderId: data.data._id, timer: 0, step: 0 });
+        fetchAcceptedJobs();
+        handleTabChange('home');
+      }
+    } catch (err) {
+      console.error('Demo error:', err);
+    }
+  };
 
   const [lastOrderState, setLastOrderState] = useState<Record<string, { status: string, rating?: number }>>({});
   const [completionPopup, setCompletionPopup] = useState<any>(null);
@@ -464,6 +527,16 @@ export function WorkLinkEmployeeDashboard() {
         </div>
       </header>
 
+      {/* Demo Overlay */}
+      {demoOrderState.active && demoOrderState.timer > 0 && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 animate-in slide-in-from-top fade-in duration-300">
+          <Badge className="bg-indigo-600 text-white px-4 py-2 rounded-full font-black text-sm shadow-xl flex items-center gap-2 border-2 border-indigo-300">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Demo Running: {demoOrderState.timer}s
+          </Badge>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="flex-1 px-4 py-4 pb-24 overflow-y-auto">
         <div className="max-w-md mx-auto space-y-5">
@@ -523,7 +596,7 @@ export function WorkLinkEmployeeDashboard() {
                   </div>
                   <div className="space-y-3">
                     {acceptedJobs.filter(j => j.status === 'accepted' || j.status === 'ongoing').map((job) => (
-                      <Card key={job._id} className="border-violet-100 bg-violet-50/20 shadow-sm relative overflow-hidden group">
+                      <Card key={job._id} id={job.isDemo ? 'demo-job-card' : undefined} className={`border-violet-100 bg-violet-50/20 shadow-sm relative overflow-hidden group ${job.isDemo ? 'ring-2 ring-indigo-400/50' : ''}`}>
                         <CardContent className="p-5">
                           <div className="flex items-start justify-between">
                             <div className="space-y-4 flex-1">
@@ -571,9 +644,22 @@ export function WorkLinkEmployeeDashboard() {
                           <Button 
                             className={`w-full mt-5 font-black h-12 tracking-wider rounded-2xl ${
                               job.status === 'ongoing' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-slate-900 hover:bg-slate-800'
+                            } ${
+                              (job.isDemo && demoOrderState.active && demoOrderState.timer === 0) 
+                              ? 'animate-pulse ring-4 ring-indigo-400 ring-offset-2' 
+                              : ''
                             }`}
+                            onClick={() => {
+                              if (job.isDemo && demoOrderState.active) {
+                                if (job.status === 'accepted') {
+                                  setDemoOrderState(prev => ({ ...prev, step: 1, timer: 6 }));
+                                } else if (job.status === 'ongoing') {
+                                  setDemoOrderState(prev => ({ ...prev, step: 2, timer: 6 }));
+                                }
+                              }
+                            }}
                           >
-                            {job.status === 'ongoing' ? 'RESUME PROTOCOL' : 'START PROTOCOL'}
+                            {job.status === 'ongoing' ? (job.isDemo ? 'START SERVICE' : 'RESUME PROTOCOL') : (job.isDemo ? 'REACHED PLACE' : 'START PROTOCOL')}
                           </Button>
                         </CardContent>
                       </Card>
@@ -698,6 +784,31 @@ export function WorkLinkEmployeeDashboard() {
                         Refresh
                     </Button>
                 </div>
+
+                {/* DEMO JOB CARD */}
+                <Card className="relative overflow-hidden group border-indigo-400/50 hover:border-indigo-500 transition-all shadow-md bg-indigo-50/10">
+                  <div className="bg-indigo-600/10 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge className="bg-indigo-600 text-white border-0 text-[9px] font-bold uppercase tracking-wider">Demo Run</Badge>
+                      <span className="text-sm font-black text-indigo-600 ml-auto">₹500</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">Experience How It Works</h3>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Virtual</span>
+                    </div>
+                  </div>
+                  <CardContent className="p-4 pt-3">
+                    <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                      Click here to automatically accept a demo job, simulate a customer, and see how you get paid in real-time.
+                    </p>
+                    <Button 
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 rounded-xl font-bold h-11 shadow-lg shadow-indigo-600/20 text-white"
+                      onClick={handleStartDemo}
+                    >
+                      Start Demo Run
+                    </Button>
+                  </CardContent>
+                </Card>
 
                 {!isOnline ? (
                     <div className="py-12 px-6 bg-slate-50 border border-dashed border-border rounded-3xl text-center">
@@ -1283,6 +1394,26 @@ export function WorkLinkEmployeeDashboard() {
         phone={selectedConsumerPhone} 
         onClose={() => setSelectedConsumerPhone(null)} 
       />
+
+      <Dialog open={showFeedbackModal} onOpenChange={(open) => !open && setShowFeedbackModal(false)}>
+        <DialogContent className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl text-center">
+          <DialogHeader>
+            <div className="w-16 h-16 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <MessageSquare className="w-8 h-8 text-violet-600" />
+            </div>
+            <DialogTitle className="text-xl font-black text-gray-900 tracking-tight">Demo Completed!</DialogTitle>
+            <p className="text-sm font-medium text-gray-500 mt-2">
+              Please leave a review and let us know your opinion on the application.
+            </p>
+          </DialogHeader>
+          <div className="flex gap-3 mt-6">
+            <Button variant="ghost" onClick={() => setShowFeedbackModal(false)} className="flex-1 text-gray-500 hover:bg-gray-50 font-bold h-12 rounded-2xl">Cancel</Button>
+            <a href="https://forms.gle/VSdt18tJrmbN7PxG8" target="_blank" rel="noopener noreferrer" className="flex-1">
+              <Button className="w-full bg-violet-600 text-white font-bold h-12 rounded-2xl" onClick={() => setShowFeedbackModal(false)}>OK</Button>
+            </a>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -1294,6 +1425,11 @@ function ConsumerDetailsModal({ phone, onClose }: { phone: string | null, onClos
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (phone === '9999999999') {
+      setConsumer({ fullName: 'John Doe (Demo User)', phone: '9999999999', city: 'Demo City' });
+      setLoading(false);
+      return;
+    }
     if (phone) {
       setLoading(true);
       fetch(`/api/consumer/auth?phone=${phone}`)

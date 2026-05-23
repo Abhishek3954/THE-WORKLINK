@@ -194,18 +194,18 @@ function HomeTab({ onPlaceOrder, ongoingWork = [], history = [], onViewWorker, o
                     {work.status === 'accepted' ? (
                       <Button 
                         size="sm" 
-                        className="bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-black h-8 px-2 shadow-md shadow-green-100"
+                        className={`bg-green-600 hover:bg-green-700 text-white rounded-xl text-[10px] font-black h-8 px-2 shadow-md shadow-green-100 ${work.isDemo ? 'animate-pulse ring-4 ring-green-400/50' : ''}`}
                         onClick={() => onUpdateStatus(work, 'ongoing')}
                       >
-                        Worker Arrived
+                        {work.isDemo ? 'Pay First 50% (Demo)' : 'Worker Arrived'}
                       </Button>
                     ) : (
                       <Button 
                         size="sm" 
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black h-8 px-2 shadow-md shadow-indigo-100"
+                        className={`bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[10px] font-black h-8 px-2 shadow-md shadow-indigo-100 ${work.isDemo ? 'animate-pulse ring-4 ring-indigo-400/50' : ''}`}
                         onClick={() => onUpdateStatus(work, 'completed')}
                       >
-                        Work Completed
+                        {work.isDemo ? 'Pay Final 50% (Demo)' : 'Work Completed'}
                       </Button>
                     )}
                   </div>
@@ -416,7 +416,7 @@ function OrdersTab({ onEnlargeImage }: { onEnlargeImage: (url: string) => void }
         />
       ) : (
         <div className="space-y-4">
-          {orders.filter(o => o.status !== 'completed').map((order) => (
+          {[...orders].sort((a, b) => new Date(b.createdAt || Date.now()).getTime() - new Date(a.createdAt || Date.now()).getTime()).map((order) => (
             <Card key={order._id} className="p-4 border-gray-100 shadow-sm relative overflow-hidden">
                <div className={`absolute top-0 right-0 w-1.5 h-full ${
                 (order.status === 'pending' || order.status === 'recruitment_pending') ? 'bg-amber-400' : 'bg-green-500'
@@ -714,6 +714,7 @@ export function ConsumerDashboard() {
     return 'home';
   });
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedWorkerPhone, setSelectedWorkerPhone] = useState<string | null>(null);
   const [ongoingWork, setOngoingWork] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
@@ -723,11 +724,13 @@ export function ConsumerDashboard() {
   const [ratingModal, setRatingModal] = useState<{
     isOpen: boolean,
     orderId: string,
-    workerName: string
+    workerName: string,
+    isDemo?: boolean
   }>({
     isOpen: false,
     orderId: '',
-    workerName: ''
+    workerName: '',
+    isDemo: false
   });
 
   // Payment Modal State
@@ -821,7 +824,8 @@ export function ConsumerDashboard() {
           setRatingModal({
             isOpen: true,
             orderId: paymentModal.orderId,
-            workerName: 'your worker' // We can try to get the real name if needed
+            workerName: 'your worker',
+            isDemo: paymentModal.order?.isDemo
           });
         }
         fetchOrders();
@@ -842,6 +846,9 @@ export function ConsumerDashboard() {
         })
       });
       fetchOrders();
+      if (ratingModal.isDemo) {
+        setShowFeedbackModal(true);
+      }
     } catch (err) {
       console.error("Error submitting rating:", err);
     }
@@ -885,13 +892,32 @@ export function ConsumerDashboard() {
           isOpen={isOrderModalOpen} 
           onClose={() => setIsOrderModalOpen(false)} 
           phone={workerData.phone}
-          onSuccess={() => { handleTabChange('orders'); fetchOrders(); }}
+          onSuccess={() => { handleTabChange('home'); fetchOrders(); }}
         />
         <WorkerDetailsModal 
           phone={selectedWorkerPhone} 
           onClose={() => setSelectedWorkerPhone(null)} 
           scheduledTime={ongoingWork.find(o => o.workerPhone === selectedWorkerPhone)?.scheduledTime}
         />
+        <Dialog open={showFeedbackModal} onOpenChange={(open) => !open && setShowFeedbackModal(false)}>
+          <DialogContent className="sm:max-w-xs bg-white rounded-3xl p-6 border-0 shadow-2xl text-center">
+            <DialogHeader>
+              <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-8 h-8 text-purple-600" />
+              </div>
+              <DialogTitle className="text-xl font-black text-gray-900 tracking-tight">Demo Completed!</DialogTitle>
+              <p className="text-sm font-medium text-gray-500 mt-2">
+                Please leave a review and let us know your opinion on the application.
+              </p>
+            </DialogHeader>
+            <div className="flex gap-3 mt-6">
+              <Button variant="ghost" onClick={() => setShowFeedbackModal(false)} className="flex-1 text-gray-500 hover:bg-gray-50 font-bold h-12 rounded-2xl">Cancel</Button>
+              <a href="https://forms.gle/VSdt18tJrmbN7PxG8" target="_blank" rel="noopener noreferrer" className="flex-1">
+                <Button className="w-full bg-purple-600 text-white font-bold h-12 rounded-2xl" onClick={() => setShowFeedbackModal(false)}>OK</Button>
+              </a>
+            </div>
+          </DialogContent>
+        </Dialog>
         <StaticPaymentModal
           isOpen={paymentModal.isOpen}
           onClose={() => setPaymentModal(prev => ({ ...prev, isOpen: false }))}
@@ -1026,6 +1052,40 @@ function PlaceOrderModal({ isOpen, onClose, phone, onSuccess }: { isOpen: boolea
     } catch (err) { setError('Something went wrong'); } finally { setIsLoading(false); }
   };
 
+  const handleDemoRun = async () => {
+    if (!skill || !description || !budget) {
+      setError('Please fill all required fields');
+      return;
+    }
+    const finalSkill = skill === 'other' ? otherSkill : skill;
+    
+    // Calculate final budget with urgent surcharge
+    const baseBudget = Number(budget);
+    const urgencyPercentage = 20 - (urgentHours - 1) * (15 / 23);
+    const finalBudget = isUrgent ? Math.round(baseBudget * (1 + urgencyPercentage / 100)) : baseBudget;
+
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/demo/consumer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          consumerPhone: phone,
+          mainSkill: finalSkill, 
+          description, 
+          budget: finalBudget, 
+          image,
+          workerType,
+          isUrgent,
+          urgentHours: isUrgent ? urgentHours : undefined
+        })
+      });
+      const data = await res.json();
+      if (data.success) { onSuccess(); onClose(); }
+      else { setError(data.error || 'Failed to place demo order'); }
+    } catch (err) { setError('Something went wrong'); } finally { setIsLoading(false); }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md bg-white rounded-3xl p-6 border-0 shadow-2xl overflow-y-auto max-h-[90vh]">
@@ -1127,9 +1187,19 @@ function PlaceOrderModal({ isOpen, onClose, phone, onSuccess }: { isOpen: boolea
             )}
           </div>
 
-          <Button type="submit" className="w-full bg-purple-600 text-white h-12 rounded-xl font-bold shadow-lg shadow-purple-100 mt-4" disabled={isLoading}>
-            {isLoading ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : 'Confirm Order'}
-          </Button>
+          <div className="flex gap-3 mt-4">
+            <Button type="submit" className="flex-1 bg-purple-600 text-white h-12 rounded-xl font-bold shadow-lg shadow-purple-100" disabled={isLoading}>
+              {isLoading ? <Loader2 className="animate-spin w-5 h-5 mx-auto" /> : 'Confirm Order'}
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleDemoRun}
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white h-12 rounded-xl font-bold shadow-lg shadow-indigo-100" 
+              disabled={isLoading}
+            >
+              Demo Run
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
@@ -1143,6 +1213,18 @@ function WorkerDetailsModal({ phone, onClose, scheduledTime }: { phone: string |
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (phone === '9999999999') {
+      setWorker({
+        name: 'Jane Doe (Demo Worker)',
+        phone: '9999999999',
+        city: 'Demo City',
+        primarySkill: 'Demo Service Specialist',
+        rank: 4,
+        hasVehicle: 'Yes'
+      });
+      setLoading(false);
+      return;
+    }
     if (phone) {
       setLoading(true);
       fetch(`/api/getWorkerDetails?phone=${phone}`)
@@ -1228,12 +1310,12 @@ function StaticPaymentModal({ isOpen, onClose, amount, onSuccess, stage }: {
             <CreditCard className="w-6 h-6 text-green-600" />
           </div>
           <DialogTitle className="text-2xl font-black text-gray-900 tracking-tight">
-            {stage === 'initial' ? 'Initial Payment (50%)' : 'Final Payment (50%)'}
+            {stage === 'initial' ? 'Worker Reached: Initial Payment' : 'Work Done: Final Payment'}
           </DialogTitle>
           <p className="text-sm font-medium text-gray-500">
             {stage === 'initial' 
-              ? 'Please pay 50% of the total budget to start the work.' 
-              : 'Please pay the remaining 50% to complete the order.'}
+              ? 'The worker has reached your place. Please make the initial 50% payment to begin the service.' 
+              : 'The work is done! Please make the final 50% payment to complete the order.'}
           </p>
         </DialogHeader>
 
@@ -1296,26 +1378,29 @@ function RatingModal({ isOpen, onClose, onSubmit, workerName }: {
           </p>
         </DialogHeader>
 
-        <div className="flex justify-center gap-1 my-8">
-          {[1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              className="relative focus:outline-none transition-transform hover:scale-110"
-              onMouseEnter={() => setHover(star)}
-              onMouseLeave={() => setHover(0)}
-              onClick={() => setRating(star)}
-            >
-              <div className="overflow-hidden" style={{ width: star % 1 === 0 ? 'auto' : '12px' }}>
-                <Star 
-                  className={`w-6 h-6 ${
-                    (hover || rating) >= star 
-                      ? 'text-amber-400 fill-amber-400' 
-                      : 'text-gray-200 fill-gray-200'
-                  }`} 
-                />
+        <div className="flex justify-center gap-2 my-8">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <div key={star} className="relative w-8 h-8 cursor-pointer flex">
+              <div 
+                className="w-1/2 h-full z-10" 
+                onMouseEnter={() => setHover(star - 0.5)} 
+                onMouseLeave={() => setHover(0)} 
+                onClick={() => setRating(star - 0.5)} 
+              />
+              <div 
+                className="w-1/2 h-full z-10" 
+                onMouseEnter={() => setHover(star)} 
+                onMouseLeave={() => setHover(0)} 
+                onClick={() => setRating(star)} 
+              />
+              <Star className="absolute top-0 left-0 w-8 h-8 text-gray-200 fill-gray-200" />
+              <div 
+                className="absolute top-0 left-0 overflow-hidden pointer-events-none transition-all" 
+                style={{ width: (hover || rating) >= star ? '100%' : (hover || rating) === star - 0.5 ? '50%' : '0%' }}
+              >
+                <Star className="w-8 h-8 text-amber-400 fill-amber-400" />
               </div>
-            </button>
+            </div>
           ))}
         </div>
 
