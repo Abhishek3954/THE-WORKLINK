@@ -47,7 +47,7 @@ const MOCK_JOBS = [
 ]
 
 export function GigWorkerDashboard() {
-  const { workerData, setCurrentStep } = useWorkflow()
+  const { workerData, setCurrentStep, updateWorkerData } = useWorkflow()
   const [activeTab, setActiveTab] = useState<'home' | 'jobs' | 'earnings' | 'profile'>(() => {
     if (typeof window !== 'undefined') {
       return (sessionStorage.getItem('worklink_activeTab') as any) || 'home'
@@ -261,7 +261,6 @@ export function GigWorkerDashboard() {
               <p className="font-semibold text-foreground text-sm">Hi, {dbName.split(' ')[0]}</p>
               <p className="text-xs text-muted-foreground">{primarySkill}</p>
             </div>
-          </div>
           </div>
         </div>
       </header>

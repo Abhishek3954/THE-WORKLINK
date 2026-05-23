@@ -461,7 +461,6 @@ export function WorkLinkEmployeeDashboard() {
               </div>
             </div>
           </div>
-          </div>
         </div>
       </header>
 
