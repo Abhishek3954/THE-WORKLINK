@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowRight, Briefcase, Shield, TrendingUp } from 'lucide-react'
+import { ArrowRight, Briefcase, Shield, TrendingUp, Home } from 'lucide-react'
 
 export function SignIn() {
   const { updateWorkerData, setCurrentStep } = useWorkflow()
@@ -86,11 +86,22 @@ export function SignIn() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="px-4 py-6 border-b border-border bg-card">
-        <div className="max-w-md mx-auto flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-lg">W</span>
+        <div className="max-w-md mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-lg">W</span>
+            </div>
+            <span className="font-semibold text-xl text-foreground">WorkLink</span>
           </div>
-          <span className="font-semibold text-xl text-foreground">WorkLink</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => setCurrentStep('selection')}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <Home className="w-4 h-4" />
+            <span>Home</span>
+          </Button>
         </div>
       </header>
 

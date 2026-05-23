@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { GigWorkerProfile } from '@/lib/types'
 import { 
   Zap, Wrench, TreePine, Sparkles, Paintbrush, 
-  Plug, Hammer, MoreHorizontal, Upload, Camera, ArrowRight
+  Plug, Hammer, MoreHorizontal, Upload, Camera, ArrowRight, Home
 } from 'lucide-react'
 import { Button } from './ui/button'
 
@@ -815,11 +815,23 @@ export function GigWorkerSurvey() {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <header className="px-4 py-6 border-b border-border bg-card">
-          <div className="max-w-md mx-auto flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-lg">W</span>
+          <div className="max-w-md mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">W</span>
+              </div>
+              <span className="font-semibold text-xl text-foreground">WorkLink</span>
             </div>
-            <span className="font-semibold text-xl text-foreground">WorkLink</span>
+            <Button 
+              type="button"
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setCurrentStep('selection')}
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <Home className="w-4 h-4" />
+              <span>Home</span>
+            </Button>
           </div>
         </header>
         <main className="flex-1 px-4 py-8">
