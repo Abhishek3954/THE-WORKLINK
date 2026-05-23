@@ -262,11 +262,6 @@ export function GigWorkerDashboard() {
               <p className="text-xs text-muted-foreground">{primarySkill}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="w-10 h-10 rounded-full bg-muted flex items-center justify-center relative">
-              <Bell className="w-5 h-5 text-muted-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
-            </button>
           </div>
         </div>
       </header>

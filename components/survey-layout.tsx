@@ -65,6 +65,7 @@ interface SurveyLayoutProps {
   backLabel?: string
   canProceed?: boolean
   showBack?: boolean
+  hideAudio?: boolean
 }
 
 export function SurveyLayout({
@@ -79,6 +80,7 @@ export function SurveyLayout({
   backLabel = 'Back',
   canProceed = true,
   showBack = true,
+  hideAudio = false,
 }: SurveyLayoutProps) {
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -92,7 +94,7 @@ export function SurveyLayout({
               </div>
               <span className="font-semibold text-lg text-foreground truncate">WorkLink</span>
             </div>
-            {currentStep === 1 && (
+            {currentStep === 1 && !hideAudio && (
               <div className="flex items-center gap-2 self-start sm:self-auto">
                 <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">General instruction</span>
                 <div className="flex-shrink-0">
@@ -114,7 +116,7 @@ export function SurveyLayout({
         <div className="max-w-2xl mx-auto">
           <div className="mb-8">
             <div className="flex items-start gap-3 mb-2">
-              {currentStep >= 1 && currentStep <= 10 && (
+              {currentStep >= 1 && currentStep <= 10 && !hideAudio && (
                 <div className="mt-1 flex-shrink-0">
                   <AudioIconButton key={currentStep} src={`/audios/Step ${currentStep}.mp4`} />
                 </div>

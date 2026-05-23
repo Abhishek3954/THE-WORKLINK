@@ -595,6 +595,7 @@ export function WorkLinkSurvey() {
       onBack={handleBack}
       canProceed={canProceed()}
       nextLabel={step === TOTAL_STEPS ? 'Submit Application' : 'Continue'}
+      hideAudio={true}
     >
       {renderStep()}
     </SurveyLayout>
