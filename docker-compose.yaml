@@ -1,0 +1,30 @@
+name: worklink-project
+
+services:
+  next:
+    build: .
+    container_name: next-server
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=${MONGODB_URI}
+    networks:
+      - new-network
+    depends_on:
+      - database
+    restart: unless-stopped
+
+  database:
+    image: mongo:8.3.4-noble
+    container_name: mongodb
+    networks:
+      - new-network
+    volumes:
+      - new-volume:/data/db
+
+networks:
+  new-network:
+    driver: bridge
+
+volumes:
+  new-volume:
