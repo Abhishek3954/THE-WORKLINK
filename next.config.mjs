@@ -21,6 +21,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  output: 'standalone',
   devIndicators: {
     buildActivity: false,
   },
